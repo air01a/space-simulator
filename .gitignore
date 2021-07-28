@@ -1,5 +1,9 @@
-./old/*
-./__pycache__/*
-./lib/*
-./bin/*
-./etc/*
+old/*
+__pycache__/*
+lib/*
+bin/*
+etc/*
+include/*
+share/*
+.DS_store
+pyvenv.cfg

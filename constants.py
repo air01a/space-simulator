@@ -1,8 +1,8 @@
-from scipy.constants import kilo as _kilo
+#from scipy.constants import kilo as _kilo
 from datetime import timedelta as _timedelta
 # IAU 2009 System of Astronomical Constants
 # Updated as of 2014
-
+_kilo = 1000
 constant_of_gravitation = 6.67428e-11  # m^3 kg^-1 s^-2
 solar_mass_parameter    = 1.32712440041e20  # m^3 s^-2
 
