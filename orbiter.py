@@ -1,7 +1,6 @@
 from vector import Vector
 from math import atan2, cos, sin, log
 import numpy as np
-import mathutils
 from orbit import Orbit
 
 
@@ -9,11 +8,11 @@ class Orbiter:
     def __init__(self, empty_mass, carburant_mass):
         self.orbit = None
         self.empty_mass = empty_mass
-        self.carburant_mass = empty_mass
+        self.carburant_mass = carburant_mass
         self.r = Vector(0.0,0.0,0.0)
         self.v = Vector(0.0,0.0,0.0)
         self.motor_flow = 1
-        self.motor_speed = 1000
+        self.motor_speed = 20000
         self.attractor = None
         self.orientation1 = 0
         self.orientation2 = 0
@@ -23,7 +22,7 @@ class Orbiter:
         self.r = r
         self.v = v
         self.orbit.set_from_state_vector(r,v)
-        E = mathutils.get_eccentric_from_true_anomaly(self.orbit.f,self.orbit.e)
+        E = self.orbit.get_eccentric_from_true_anomaly()
         #self.M0 = E-self.orbit.e*np.sin(E)
         #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
 
@@ -48,43 +47,48 @@ class Orbiter:
         angle = atan2(self.r.y,self.r.x)
         a = Vector(-cos(angle)*self.attractor.mu/ra**2,-sin(angle)*self.attractor.mu/ra**2,0)
         self.v = self.v + a * dt
+
+
         if dv!=None:
             self.v += dv
 
+        friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.diameter,self.v,50,1)
+        if friction!=0:
+            dv = Vector(0,0,0)
+            self.v += dt * friction/(self.empty_mass+self.carburant_mass) 
         self.r = self.r + self.v * dt
 
+
         if dv!=None:
-            self.orbit.set_from_state_vector(self.r,self.v)
-   
-
+            self.set_state(self.r,self.v,t)
+            return True
             #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
-
+        return False
 
     def update_position_delta_t(self, t):
-
         dt = t-self.t0
         M = self.M0 + (dt)*(self.attractor.mu/(self.orbit.a**3))**0.5
         try:  
-            E = mathutils.get_eccentricity_from_mean(self.orbit.e,M)
+            E = self.orbit.get_eccentricity_from_mean(M)
             self.last_E = E
         except:
             E = self.last_E
+
         self.M0 = M
         self.t0 = t
 
-        anomaly = mathutils.true_anomaly_from_eccentric(self.orbit.e,E)
+        anomaly = self.orbit.true_anomaly_from_eccentric(self.orbit.e,E)
+
         ra = self.orbit.a*(1-self.orbit.e**2)/(1+self.orbit.e*np.cos(anomaly))
 
         rx = ra * np.cos(anomaly)
         ry = ra * np.sin(anomaly)
-        r = mathutils.change_axe(Vector(rx,ry,0), self.orbit.arg_pe, self.orbit.raan, self.orbit.i)
-
+        r = self.orbit.change_axe(Vector(rx,ry,0))
 
 
         vx = (self.attractor.mu * self.orbit.a)**0.5 / ra*-np.sin(E) + .0
         vy = (self.attractor.mu * self.orbit.a)**0.5 / ra*(1-self.orbit.e**2)**0.5*np.cos(E)
-        v = mathutils.change_axe(Vector(vx,vy,0), self.orbit.arg_pe, self.orbit.raan, self.orbit.i)
-
+        v = self.orbit.change_axe(Vector(vx,vy,0))
         self.r = r
         self.v = v
 
