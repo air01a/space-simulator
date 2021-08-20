@@ -27,7 +27,7 @@ orbiter.set_state(r,v,0)
 
 event_listener = EventListener()
 
-display = Display(event_listener,5)
+display = Display(event_listener,1)
 pilot = PilotOrbiter(orbiter, event_listener)
 time_controller = TimeController(1,event_listener,0)
 
