@@ -1,5 +1,6 @@
 import math
 from vector import Vector
+from orbit import Orbit
 
 
 class Attractor:
@@ -13,7 +14,12 @@ class Attractor:
         self.mu = mu
         self.diameter = diameter
         self.atmosphere_limit = 0
+        self.orbit = None
 
+    def set_orbit_parameters(self,a, e , i, raan, arg_pe, f):
+        self.orbit = Orbit(self.mu)
+        self.orbit.set_elements(a, e, i , raan, arg_pe, f)
+        
 
     def set_atmosphere_condition(self, p0, h0, atmosphere_limit):
         self.p0 = p0
@@ -52,7 +58,7 @@ class Attractor:
         print(h)
         print("Speed ",end='')
         print(v.norm())
-
+        print("CSV;%i;%i" % (h,v.norm()))
         return F
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 import math
-from numpy import cos, sin, pi, tan, arccos, arctan, arcsin, cross, sinh
+from numpy import cos, sin, pi, tan, arccos, arctan, arcsin, cross, sinh, tanh, cosh
+from math import atan2
 from vector import Vector
 import constants
 
@@ -97,17 +98,16 @@ class Orbit:
     def set_epoch(self, epoch):
         self.epoch = epoch
 
-    def get_time_series(self):
-        return self.get_time_series()
-
-
     def get_node_vector(self, h):
         k = Vector(0.0,0.0,1.0)
         return k.cross(h)
 
 
     def get_eccentric_from_true_anomaly(self):
-        return 2 * arctan( tan (self.f / 2) / ((1+self.e)/(1-self.e)) ** 0.5 )
+        if self.e<1:
+            return 2 * arctan( tan (self.f / 2) / ((1+self.e)/(1-self.e)) ** 0.5 )
+
+        return 2 * arctan( tanh (self.f / 2) / ((1+self.e)/(self.e-1)) ** 0.5 )
 
     def get_eccentricity(self,r,v):
         return ((v.norm() ** 2 - self.mu / r.norm()) * r - r.dot(v) * v ) / self.mu
@@ -117,7 +117,7 @@ class Orbit:
 
 
     # Coordonnates from ellipse reference to global axis
-    def change_axe(self,v):
+    def get_eci(self,v):
         ret = Vector(0.0,0.0,0.0)
         rx = v.x
         ry = v.y
@@ -137,7 +137,13 @@ class Orbit:
         
     # Get r from angle
     def _get_polar_ellipse(self,angle):
-        r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
+        if self.e<1:
+            r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
+        elif self.e==1:
+            r = self.a/(1+self.e*cos(angle))
+        else:
+            r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
+
         return r
 
     # return ellipse points
@@ -147,18 +153,26 @@ class Orbit:
         angle = 0
         increment = 2*pi / (90 )
         angle_max = 2*pi
-        if self.e>1:
+
+        if self.e==1:
+            angle = 0
+            angle_max = pi/3
+        elif self.e>1:
             angle = -arccos(-1/self.e)
             angle_max = -angle
+            #angle = -pi/3
+            #angle_max = pi/3
 
         while angle<=angle_max:
 
             r=self._get_polar_ellipse(angle)
             series.append((angle,r))
+            if self.e<1:
+                r = Vector(r*cos(angle),r*sin(angle),0)
+            else:
+                r = Vector(r*cos(angle),r*sin(angle),0)
 
-            r = Vector(r*cos(angle),r*sin(angle),0)
-
-            pos = self.change_axe(r)
+            pos = self.get_eci(r)
 
             series_cartesien.append(pos)
             angle+=increment
@@ -168,21 +182,90 @@ class Orbit:
     def get_orbital_period(self):
         return 2*np.pi*((self.a**3/self.mu)**0.5)
 
+
+    def get_state(self, E):
+        anomaly = self.true_anomaly_from_eccentric(E)
+        ra = self.a*(1-self.e**2)/(1+self.e*cos(anomaly))
+
+        rx = ra * cos(anomaly)
+        ry = ra * sin(anomaly)
+        r = Vector(rx,ry,0)
+
+        if self.e<1:
+            vx = (self.mu * self.a)**0.5 / ra *-sin(E) + .0
+            vy = (self.mu * self.a)**0.5 / ra*(1-self.e**2)**0.5*cos(E)
+        else:
+            angle = arctan(self.e*sin(anomaly)/(1+self.e*cos(anomaly)))
+            v = (self.mu*(2/r.norm()-1/self.a))**0.5
+            vrx = v * sin(angle)
+            vry = v * cos(angle)
+            vx = cos(-anomaly) * vrx + sin(-anomaly) * vry
+            vy = -sin(-anomaly) * vrx + cos(-anomaly) * vry
+
+        return(r, Vector(vx,vy,0))
+
     # get real anomaly from mean anomaly
     # 
     def get_eccentricity_from_mean(self, M, tolerance=1e-15):
-        m_norm = math.fmod(M, 2 * np.pi)
-        E0 = M + (-1 / 2 * self.e ** 3 + self.e + (self.e ** 2 + 3 / 2 * np.cos(M) * self.e ** 3) * np.cos(M)) * np.sin(M)
-        dE = tolerance + 1
-        count = 0
+        En = M
+        e = abs(self.e)
+        E = M
+        v = M
+        counter = 0
+        if self.e<1:
+            E = En - (En-e*sin(En)- M)/(1 - e*cos(En))
+            
+            while abs(E-En) > tolerance and counter<100:
+                En = E
+                E = En - (En - e*sin(En) - M)/(1 - e*cos(En))
+                counter+=1
+            sv = ((1 - e * e) **0.5)* sin(E)
+            cv = cos(E) - e
+            v = atan2(sv, cv)
+
+        if (self.e == 1):
+            E = En - (En+En*En*En/3- M)/(En*En+1)
+            while (abs(E-En) > 1e-12) and counter<100:
+                En = E
+                E = En - (En+En*En*En/3- M)/(En*En+1)
+                counter+=1
+            v=2*arctan(E)
+
+        if self.e>1:
+            E = En - (e*sinh(En)-En- M)/(e*cosh(En)-1)
+            while abs(E-En) > 1e-12 and counter<100:
+                En = E
+                E = En - (e*sinh(En)-En- M)/(e*cosh(En)-1)
+                counter+=1
+
+            sv = ((e * e - 1) ** 0.5) * sinh(E)
+            cv = e - cosh(E)
+            v = atan2(sv, cv)
+
+        return E
+
+
+
+    '''def get_eccentricity_from_mean(self, M, tolerance=1e-15):
+        if self.e==0:
+            return M
+
         if self.e<1:
             mysin = sin
+            mycos = cos
         else:
             mysin = sinh
+            mycos = cosh
+
+        m_norm = math.fmod(M, 2 * np.pi)
+        E0 = M + (-1 / 2 * self.e ** 3 + self.e + (self.e ** 2 + 3 / 2 * mycos(M) * self.e ** 3) * mycos(M)) * mysin(M)
+        dE = tolerance + 1
+        count = 0
+        
         while dE > tolerance:
-            t1 = np.cos(E0)
+            t1 = mycos(E0)
             t2 = -1 + self.e * t1
-            t3 = np.sin(E0)
+            t3 = mysin(E0)
             t4 = self.e * t3
             t5 = -E0 + t4 + m_norm
             t6 = t5 / (1 / 2 * t5 * t4 / t2 + t2)
@@ -192,18 +275,25 @@ class Orbit:
             count += 1
             if count == self.MAX_ITERATIONS:
                 raise Exception('Did not converge after {n} iterations. (e={e!r}, M={M!r})'.format(n=self.MAX_ITERATIONS, e=self.e, M=M))
-        return E
+        print("meth 1 : %r" % E)
+        return E '''
 
-    def get_velocity(self, a, r, e, mu):
-        v = Vector(0.0,0.0,0.0)
+    def get_velocity(self, E, r):
         ra = (r.x**2+r.y**2)**0.5
-        v.x = -a/ra * 1/((1-e**2)**0.5)*r.y*(mu/a**3)**0.5
-        v.y = a/ra * ((1-e**2)**0.5)*(r.x+a*e)*(mu/a**3)**0.5
+        #v.x = -a/ra * 1/((1-e**2)**0.5)*r.y*(mu/a**3)**0.5
+        #v.y = a/ra * ((1-e**2)**0.5)*(r.x+a*e)*(mu/a**3)**0.5
+
+        f = ((self.mu * self.a)**0.5)/ra
+        v = f*Vector(-sin(E),(1-self.e**2)**0.5*cos(E),0.0)
+
         return v
 
-    def true_anomaly_from_eccentric(self, e, E):
+    def true_anomaly_from_eccentric(self, E):
         """Convert eccentric anomaly to true anomaly."""
-        return 2 * math.atan2(math.sqrt(1 + e) * math.sin(E / 2), math.sqrt(1 - e) * math.cos(E / 2))
+        if self.e<1:
+            return 2 * math.atan2(math.sqrt(1 + self.e) * math.sin(E / 2), math.sqrt(1 - self.e) * math.cos(E / 2))
+        #return 2 * math.atan2(math.sqrt(1 + e) * math.sin(E / 2), math.sqrt(1 - e) * math.cos(E / 2))
+        return 2 * math.atan( math.sqrt ((1+self.e)/(self.e-1)) * tanh(E/2))
 
     def get_mean_from_time(self, period, t, t0=0):
         return 2 * np.pi * (t-t0)/period
@@ -211,7 +301,9 @@ class Orbit:
     def get_period(self, a,mu):
         return (4 * np.pi**2  * a**3/ mu) ** 0.5
 
-    def get_m0(self, f,e):
-        E = self.get_eccentric_from_true_anomaly()
-        M0 = E-e*np.sin(E)
+    def get_m0(self,E):
+        if (self.e<1):
+            M0 = E-self.e*np.sin(E) 
+        else:
+            M0 = self.e*sinh(E)-E
         return M0

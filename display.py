@@ -6,6 +6,9 @@ RED   =       (255,   0,   0)
 GREEN =       (  0, 200,   0)
 BLACK =       (  0,   0,   0)
 class Display():
+    def add_object(self, object):
+        self.objects.append(object)
+
     def zoom_out(self):
         self.zoom_ratio +=0.05
         self.picture = pygame.transform.scale(self.earth_main_sprite, (int(111*self.zoom_ratio), int(111*self.zoom_ratio)))
@@ -28,6 +31,7 @@ class Display():
     def __init__(self, event_listener, zoom_ratio=1):
         pygame.init()
 
+        self.objects = []
         self.size = self.width, self.height = 800, 800
         self.black = 0, 0, 0
         self.zoom_ratio = zoom_ratio

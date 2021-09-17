@@ -25,8 +25,7 @@ class Orbiter:
         E = self.orbit.get_eccentric_from_true_anomaly()
         #self.M0 = E-self.orbit.e*np.sin(E)
         #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
-
-        self.M0 = E-self.orbit.e*np.sin(E)
+        self.M0 = self.orbit.get_m0(E)
         self.t0 = t
 
     def set_attractor(self, attractor):
@@ -51,7 +50,7 @@ class Orbiter:
 
         if dv!=None:
             self.v += dv
-
+        print("t=1, velocity = %r" % self.v.norm())
         friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.diameter,self.v,50,1)
         if friction!=0:
             dv = Vector(0,0,0)
@@ -67,7 +66,7 @@ class Orbiter:
 
     def update_position_delta_t(self, t):
         dt = t-self.t0
-        M = self.M0 + (dt)*(self.attractor.mu/(self.orbit.a**3))**0.5
+        M = self.M0 + (dt)*(self.attractor.mu/(abs(self.orbit.a)**3))**0.5
         try:  
             E = self.orbit.get_eccentricity_from_mean(M)
             self.last_E = E
@@ -77,20 +76,11 @@ class Orbiter:
         self.M0 = M
         self.t0 = t
 
-        anomaly = self.orbit.true_anomaly_from_eccentric(self.orbit.e,E)
+        (r,v) = self.orbit.get_state(E)
+        self.r = self.orbit.get_eci(r)
+        self.v = self.orbit.get_eci(v)
+        print("t=*, velocity = %r" % self.v.norm())
 
-        ra = self.orbit.a*(1-self.orbit.e**2)/(1+self.orbit.e*np.cos(anomaly))
-
-        rx = ra * np.cos(anomaly)
-        ry = ra * np.sin(anomaly)
-        r = self.orbit.change_axe(Vector(rx,ry,0))
-
-
-        vx = (self.attractor.mu * self.orbit.a)**0.5 / ra*-np.sin(E) + .0
-        vy = (self.attractor.mu * self.orbit.a)**0.5 / ra*(1-self.orbit.e**2)**0.5*np.cos(E)
-        v = self.orbit.change_axe(Vector(vx,vy,0))
-        self.r = r
-        self.v = v
 
     def delta_v(self, t, dt, thrust):
         if self.carburant_mass < 0:
