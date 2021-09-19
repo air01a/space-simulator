@@ -1,6 +1,7 @@
 import math
 from vector import Vector
 from orbit import Orbit
+import logging, inspect
 
 
 class Attractor:
@@ -48,17 +49,19 @@ class Attractor:
 
         if density ==0:
             return 0
+        if v.norm()==0:
+            return 0
 
         f = 1/2 * density * v.norm()**2 * cross_section * drag_coefficient
         F = -(1/v.norm()) * v * f
 
-        print("Friction ",end='')
-        print(F, F.norm())
-        print("Altitude ",end='')
-        print(h)
-        print("Speed ",end='')
-        print(v.norm())
-        print("CSV;%i;%i" % (h,v.norm()))
+        logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+        logging.debug("Friction "+str(F)+" " + str(F.norm()))
+        logging.debug("Altitude " + str(h))
+        logging.debug("Speed "+str(v.norm()))
+        logging.debug("CSV;%i;%i" % (h,v.norm()))
+        logging.debug("----------------------------")
+
         return F
 
 

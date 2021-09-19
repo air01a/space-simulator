@@ -52,9 +52,9 @@ class Vector:
         if not isinstance(v, Vector):
             return None
         
-        x = self.y * v.z - self.z * v.y
-        y = self.z * v.x - self.x * v.z
-        z = self.x * v.y - self.y * v.x
+        x = self.y * v.z - self.z * v.y +.0
+        y = self.z * v.x - self.x * v.z +.0
+        z = self.x * v.y - self.y * v.x +.0
 
         return self.__class__(x,y,z)
 

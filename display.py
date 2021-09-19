@@ -69,7 +69,7 @@ class Display():
 
         orbiter_x = orbiter.r.x*self.orbit_factor*self.zoom_ratio+self.earth.x+self.earth_diameter
         orbiter_y = -orbiter.r.y*self.orbit_factor*self.zoom_ratio+self.earth.y+self.earth_diameter
-        pygame.draw.circle(self.screen, BLUE, (orbiter_x,orbiter_y), 5)
+        pygame.draw.circle(self.screen, GREEN, (orbiter_x,orbiter_y), 5)
 
         head_x = 5*np.cos(orbiter.orientation1)
         head_y = -5*np.sin(orbiter.orientation1)

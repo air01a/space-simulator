@@ -8,6 +8,10 @@ from pilotorbiter import PilotOrbiter
 from timecontroller import TimeController
 from event import EventListener
 from display import Display
+import logging
+
+
+logging.basicConfig(format='Debug:%(message)s', level=logging.DEBUG)
 
 
 earth = Attractor(Vector(0,0,0),6378140.0,constants.earth_mu)
@@ -17,10 +21,14 @@ orbiter = Orbiter(2000,8000)
 orbiter.set_attractor(earth)
 
 r = Vector([42162.0 * 1000, 0.0, 0.0])
-v = Vector([200.0,3074.0*1.1,100.0])
+v = Vector([200.0,3074.0*1.1,0.0])
 
 #r = Vector([ -6203109.232224876, 2731162.6194017506, 249585.2228845337])
 #v = Vector( [ -1757.6448117882119, -9897.455983053283, -445.53566889162994])
+#r = Vector([ 0, 6378140, 0])
+#v = Vector( [ 0, 0, 0])
+r = Vector([ 6378140, 0, 0])
+v = Vector( [ 0, 0, 0])
 orbiter.set_state(r,v,0)
 (polar_orbit,cartesien_orbit) = orbiter.orbit.get_time_series()
 
@@ -37,7 +45,6 @@ loop = 0
 while not done:
     loop +=1
     done = event_listener.pop_event()
-    # print(orbiter.r,orbiter.v)
     if time_controller.delta_t()<=1:
         if pilot.thrust:
             orbiter.delta_v(time_controller.t,time_controller.delta_t(),0.9)
@@ -49,11 +56,16 @@ while not done:
 
     else:
         orbiter.update_position_delta_t(time_controller.t)
+
     display.draw(orbiter, cartesien_orbit)
     time_controller.update_time()
     
-    if orbiter.r.norm()<earth.diameter:
-        done = True
+    if orbiter.r.norm()<=earth.diameter:
+        if (orbiter.v.norm()>10):
+            done = True
+            print("Crash on earth")
+        else:
+            r.v = Vector(0,0,0)
     
 clock = time.time()
 

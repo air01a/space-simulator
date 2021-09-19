@@ -4,6 +4,9 @@ from numpy import cos, sin, pi, tan, arccos, arctan, arcsin, cross, sinh, tanh, 
 from math import atan2
 from vector import Vector
 import constants
+import os
+import inspect
+import logging
 
 class Orbit:
     def __init__(self,mu = constants.earth_mu):
@@ -26,7 +29,6 @@ class Orbit:
 
         h = r.cross(v)
         n = self.get_node_vector(h)
-
         ev = self.get_eccentricity(r,v)
         E = self.get_energy(r,v)
 
@@ -39,7 +41,7 @@ class Orbit:
         # momentum vector and its z component.
         i = np.arccos(h.z / h.norm())
 
-        if abs(i - 0) < SMALL_NUMBER:
+        if abs(i - 0) < SMALL_NUMBER or (abs(i-pi) < SMALL_NUMBER):
             # For non-inclined orbits, raan is undefined;
             # set to zero by convention
             raan = 0
@@ -56,6 +58,7 @@ class Orbit:
                     arg_pe=2*pi-arg_pe
                 
         else:
+
             # Right ascension of ascending node is the angle
             # between the node vector and its x component.
             raan = np.arccos(n.x/ n.norm())
@@ -64,8 +67,9 @@ class Orbit:
 
             # Argument of periapsis is angle between
             # node and eccentricity vectors.
-            arg_pe = np.arccos(n.dot(ev) / (n.norm() * ev.norm()))
 
+            arg_pe = np.arccos(n.dot(ev) / (n.norm() * ev.norm()))
+            
         if abs(e - 0) < SMALL_NUMBER:
             if abs(i - 0) < SMALL_NUMBER:
                 # True anomaly is angle between position
@@ -90,6 +94,17 @@ class Orbit:
 
             if r.dot(v) < 0:
                 f = 2 * np.pi - f
+
+
+        logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+        logging.debug("a "+str(a))
+        logging.debug("e " + str(e))
+        logging.debug("i "+str(i))
+        logging.debug("raan " + str(raan))
+        logging.debug("arg_pe " + str(arg_pe))
+        logging.debug("f " + str(f))
+
+        logging.debug("----------------------------")
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i, raan, arg_pe, f)
 
     def get_period(self):
@@ -121,6 +136,7 @@ class Orbit:
         ret = Vector(0.0,0.0,0.0)
         rx = v.x
         ry = v.y
+
         cos_arg_pe = cos(self.arg_pe)
         sin_arg_pe = sin(self.arg_pe)
         cos_raan = cos(self.raan)
@@ -171,9 +187,7 @@ class Orbit:
                 r = Vector(r*cos(angle),r*sin(angle),0)
             else:
                 r = Vector(r*cos(angle),r*sin(angle),0)
-
             pos = self.get_eci(r)
-
             series_cartesien.append(pos)
             angle+=increment
         return (series,series_cartesien)
@@ -212,35 +226,43 @@ class Orbit:
         E = M
         v = M
         counter = 0
-        if self.e<1:
+
+        # Perfect circle, Mean anomaly = true anomaly
+        if self.e==0:
+            return M
+
+        # Elliptic trajectory
+        elif self.e<1:
             E = En - (En-e*sin(En)- M)/(1 - e*cos(En))
             
             while abs(E-En) > tolerance and counter<100:
                 En = E
                 E = En - (En - e*sin(En) - M)/(1 - e*cos(En))
                 counter+=1
-            sv = ((1 - e * e) **0.5)* sin(E)
-            cv = cos(E) - e
-            v = atan2(sv, cv)
+            #sv = ((1 - e * e) **0.5)* sin(E)
+            #cv = cos(E) - e
+            #v = atan2(sv, cv)
 
-        if (self.e == 1):
+        # Parabolic trajectory
+        elif (self.e == 1):
             E = En - (En+En*En*En/3- M)/(En*En+1)
             while (abs(E-En) > 1e-12) and counter<100:
                 En = E
                 E = En - (En+En*En*En/3- M)/(En*En+1)
                 counter+=1
-            v=2*arctan(E)
+            #v=2*arctan(E)
 
-        if self.e>1:
+        # Hyperbolic trajectory
+        elif self.e>1:
             E = En - (e*sinh(En)-En- M)/(e*cosh(En)-1)
             while abs(E-En) > 1e-12 and counter<100:
                 En = E
                 E = En - (e*sinh(En)-En- M)/(e*cosh(En)-1)
                 counter+=1
 
-            sv = ((e * e - 1) ** 0.5) * sinh(E)
-            cv = e - cosh(E)
-            v = atan2(sv, cv)
+            #sv = ((e * e - 1) ** 0.5) * sinh(E)
+            #cv = e - cosh(E)
+            #v = atan2(sv, cv)
 
         return E
 
@@ -280,8 +302,6 @@ class Orbit:
 
     def get_velocity(self, E, r):
         ra = (r.x**2+r.y**2)**0.5
-        #v.x = -a/ra * 1/((1-e**2)**0.5)*r.y*(mu/a**3)**0.5
-        #v.y = a/ra * ((1-e**2)**0.5)*(r.x+a*e)*(mu/a**3)**0.5
 
         f = ((self.mu * self.a)**0.5)/ra
         v = f*Vector(-sin(E),(1-self.e**2)**0.5*cos(E),0.0)
@@ -292,7 +312,6 @@ class Orbit:
         """Convert eccentric anomaly to true anomaly."""
         if self.e<1:
             return 2 * math.atan2(math.sqrt(1 + self.e) * math.sin(E / 2), math.sqrt(1 - self.e) * math.cos(E / 2))
-        #return 2 * math.atan2(math.sqrt(1 + e) * math.sin(E / 2), math.sqrt(1 - e) * math.cos(E / 2))
         return 2 * math.atan( math.sqrt ((1+self.e)/(self.e-1)) * tanh(E/2))
 
     def get_mean_from_time(self, period, t, t0=0):
