@@ -21,21 +21,22 @@ orbiter = Orbiter(2000,8000)
 orbiter.set_attractor(earth)
 
 r = Vector([42162.0 * 1000, 0.0, 0.0])
-v = Vector([200.0,3074.0*1.1,0.0])
-
+v = Vector([-200.0,-3074.0*1.1,0.0])
+zoom_ratio = 1
 #r = Vector([ -6203109.232224876, 2731162.6194017506, 249585.2228845337])
 #v = Vector( [ -1757.6448117882119, -9897.455983053283, -445.53566889162994])
 #r = Vector([ 0, 6378140, 0])
 #v = Vector( [ 0, 0, 0])
-r = Vector([ 6378140, 0, 0])
-v = Vector( [ 0, 0, 0])
+#r = Vector([ 6378140, 0, 0])
+#v = Vector( [ 0, 0, 0])
+#zoom_ratio = 50
 orbiter.set_state(r,v,0)
 (polar_orbit,cartesien_orbit) = orbiter.orbit.get_time_series()
 
 
 event_listener = EventListener()
 
-display = Display(event_listener,1)
+display = Display(event_listener,zoom_ratio)
 pilot = PilotOrbiter(orbiter, event_listener)
 time_controller = TimeController(1,event_listener,0)
 
@@ -60,7 +61,7 @@ while not done:
     display.draw(orbiter, cartesien_orbit)
     time_controller.update_time()
     
-    if orbiter.r.norm()<=earth.diameter:
+    if orbiter.r.norm()<=earth.radius:
         if (orbiter.v.norm()>10):
             done = True
             print("Crash on earth")

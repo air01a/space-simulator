@@ -41,7 +41,7 @@ class Orbiter:
         return Vector(ra*cos(angle), ra*sin(angle),0)
 
     def update_position(self, t,dt, dv=None):
-        if (self.r.norm() > self.attractor.diameter):
+        if (self.r.norm() > self.attractor.radius):
             ra = (self.r.x**2+self.r.y**2)**0.5
             angle = atan2(self.r.y,self.r.x)
             a = Vector(-cos(angle)*self.attractor.mu/ra**2,-sin(angle)*self.attractor.mu/ra**2,0)
@@ -50,7 +50,7 @@ class Orbiter:
 
         if dv!=None:
             self.v += dv
-        friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.diameter,self.v,50,1)
+        friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,1)
         if friction!=0:
             dv = Vector(0,0,0)
             self.v += dt * friction/(self.empty_mass+self.carburant_mass) 
@@ -63,7 +63,7 @@ class Orbiter:
         logging.debug("Velocity "+str(self.v.norm()))
         logging.debug("----------------------------")
 
-        if dv!=None and self.r.norm() > self.attractor.diameter and self.v.norm()>0:
+        if dv!=None and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
             return True
             #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
@@ -84,6 +84,14 @@ class Orbiter:
         (r,v) = self.orbit.get_state(E)
         self.r = self.orbit.get_eci(r)
         self.v = self.orbit.get_eci(v)
+
+
+        logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+        logging.debug("dt %i" % dt)
+        logging.debug("E %r" % E)
+        logging.debug("r %s" % str(self.r))
+        logging.debug("v %s" % str(self.v))
+        logging.debug("----------------------------")
 
 
     def delta_v(self, t, dt, thrust):

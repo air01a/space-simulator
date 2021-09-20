@@ -1,4 +1,5 @@
 import time
+import logging, inspect
 
 
 class TimeController():
@@ -8,20 +9,30 @@ class TimeController():
             self.t_increment = 1
         else:
             self.t_increment *= 2
-        print("Time Speed : %i", self.t_increment)
+
+        logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+        logging.debug("TimeSeed %i" % self.t_increment)
+        logging.debug("----------------------------")
 
     def time_normalize(self):
 
         self.t_increment = 0
         self.clock=time.time()-self.t
-        print("Real time")
+
+        logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+        logging.debug("TimeSeed Real time" )
+        logging.debug("----------------------------")
 
     def time_decelarate(self):
 
         self.t_increment /= 2
         if self.t_increment < 1 :
             self.t_increment = 1
-        print("Time Speed : %i", self.t_increment)
+        
+        logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+        logging.debug("TimeSeed %i" % self.t_increment)
+        logging.debug("----------------------------")
+
         
     def delta_t(self):
         return self.t-self.last_t

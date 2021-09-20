@@ -6,14 +6,14 @@ import logging, inspect
 
 class Attractor:
 
-    def __init__(self, r, diameter, mu=None, mass=None, soi=None):
+    def __init__(self, r, radius, mu=None, mass=None, soi=None):
         self.mass = mass
         self.soi =  soi
         self.parent = None
         self.child = []
         self.r = r
         self.mu = mu
-        self.diameter = diameter
+        self.radius = radius
         self.atmosphere_limit = 0
         self.orbit = None
 

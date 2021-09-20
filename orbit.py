@@ -103,7 +103,6 @@ class Orbit:
         logging.debug("raan " + str(raan))
         logging.debug("arg_pe " + str(arg_pe))
         logging.debug("f " + str(f))
-
         logging.debug("----------------------------")
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i, raan, arg_pe, f)
 
@@ -167,7 +166,7 @@ class Orbit:
         series=[]
         series_cartesien=[]
         angle = 0
-        increment = 2*pi / (90 )
+        increment = 2*pi / 90 
         angle_max = 2*pi
 
         if self.e==1:
@@ -180,13 +179,13 @@ class Orbit:
             #angle_max = pi/3
 
         while angle<=angle_max:
-
             r=self._get_polar_ellipse(angle)
             series.append((angle,r))
             if self.e<1:
                 r = Vector(r*cos(angle),r*sin(angle),0)
             else:
                 r = Vector(r*cos(angle),r*sin(angle),0)
+
             pos = self.get_eci(r)
             series_cartesien.append(pos)
             angle+=increment
