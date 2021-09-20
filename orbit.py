@@ -169,8 +169,12 @@ class Orbit:
         series=[]
         series_cartesien=[]
         angle = 0
-        increment = 2*pi / 90 
+        increment = 2*pi / 30 
         angle_max = 2*pi
+
+        max = self._get_polar_ellipse(pi/2)
+        min = self._get_polar_ellipse(0)
+
 
         if self.e==1:
             angle = 0
@@ -178,20 +182,24 @@ class Orbit:
         elif self.e>1:
             angle = -arccos(-1/self.e)
             angle_max = -angle
-            #angle = -pi/3
-            #angle_max = pi/3
+
 
         while angle<=angle_max:
             r=self._get_polar_ellipse(angle)
             series.append((angle,r))
             if self.e<1:
-                r = Vector(r*cos(angle),r*sin(angle),0)
+                rv = Vector(r*cos(angle),r*sin(angle),0)
             else:
-                r = Vector(r*cos(angle),r*sin(angle),0)
+                rv = Vector(r*cos(angle),r*sin(angle),0)
 
-            pos = self.get_eci(r)
+            pos = self.get_eci(rv)
             series_cartesien.append(pos)
-            angle+=increment
+
+            inc = increment * min/r
+            if (inc<pi/400):
+                inc = pi/400
+            angle+=inc
+            
         return (series,series_cartesien)
 
     # get orbit period

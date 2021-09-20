@@ -1,4 +1,6 @@
 import pygame
+from pygame.locals import VIDEORESIZE
+
 import numpy as np
 from vector import Vector
 BLUE  =       (  0,   0, 255)
@@ -11,6 +13,12 @@ DEFAULT_EARTH_SIZE = 111
 class Display():
     def add_object(self, object):
         self.objects.append(object)
+
+    def resize(self):
+        self.width, self.height = pygame.display.Info().current_w, pygame.display.Info().current_h
+        self.x_center = (self.width-self.picture.get_width())/2
+        self.y_center = (self.height-self.picture.get_height())/2
+
 
     def zoom_out(self):
         self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1
@@ -42,13 +50,13 @@ class Display():
         #self.earth = self.picture.get_rect()
         self.earth = Vector(0,0,0)
 
-        self.width, self.height = pygame.display.Info().current_w, pygame.display.Info().current_h
-        self.x_center = (self.width-self.picture.get_width())/2
-        self.y_center = (self.height-self.picture.get_height())/2
+        self.resize()
 
         self.orbit_factor = DEFAULT_EARTH_SIZE/(2*6378140)
         event_listener.add_key_event(97, self.zoom_out)
         event_listener.add_key_event(113, self.zoom_in)
+
+        event_listener.add_event(VIDEORESIZE,self.resize)
 
     def center_orbit(self, x, y, force_earth_center=False,xearth=0,yearth=0):
         if not force_earth_center:
