@@ -56,6 +56,7 @@ class Orbit:
                 arg_pe = math.atan2(ev.y,ev.x)
                 if (h.z<0):
                     arg_pe=2*pi-arg_pe
+                    print("h.z<0")
                 
         else:
 
@@ -71,7 +72,7 @@ class Orbit:
             arg_pe = np.arccos(n.dot(ev) / (n.norm() * ev.norm()))
             
         if abs(e - 0) < SMALL_NUMBER:
-            if abs(i - 0) < SMALL_NUMBER:
+            if abs(i - 0) < SMALL_NUMBER or (abs(i-pi) < SMALL_NUMBER):
                 # True anomaly is angle between position
                 # vector and its x component.
                 f = np.arccos(r.x / r.norm())
@@ -84,10 +85,12 @@ class Orbit:
                 if np.dot(v) > 0:
                     f = 2 * np.pi - f
         else:
-
-            if ev.z < 0:
-                arg_pe = 2 * np.pi - arg_pe
-
+            # already managed by h.z<0???
+           # if ev.z < 0 :
+            #    arg_pe = 2 * np.pi - arg_pe
+            #    print("ev.z<0")
+            
+            
             # True anomaly is angle between eccentricity
             # vector and position vector.
             f = np.arccos(ev.dot(r) / (ev.norm() * r.norm()))
