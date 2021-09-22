@@ -4,19 +4,85 @@ import numpy as np
 from orbit import Orbit
 import logging, inspect
 
-class Orbiter:
-    def __init__(self, empty_mass, carburant_mass):
-        self.orbit = None
+class Stage_Composant:
+    def __init__(self,motor_flow, motor_speed, empty_mass, carburant_mass):
+        self.motor_flow = motor_flow
+        self.motor_speed = motor_speed
         self.empty_mass = empty_mass
         self.carburant_mass = carburant_mass
+        self.throttle = 1
+
+    def thrust(self,dt):
+        if (self.carburant_mass>0):
+            t = dt*self.motor_flow * self.motor_speed * self.throttle
+            self.carburant_mass -= dt*self.motor_flow
+            return (t,self.carburant_mass)
+        return (0,0)
+
+class Stages:
+    def __init__(self):
+        self.stages = []
+        self.empty_part = []
+        self.total_empty_mass = 0
+        self.carburant_mass = 0
+
+    def add_stage(self):
+        self.stages.append({})
+    
+    def add_part(self, name, part):
+        self.stages[-1][name]=part
+        self.total_empty_mass += part.empty_mass
+        if len(self.stages)>1:
+            self.total_empty_mass += part.carburant_mass
+        else:
+            self.carburant_mass += part.carburant_mass
+    
+    def sep_part(self,name):
+        print(self.stages[0])
+        part = self.stages[0][name]
+        self.total_empty_mass -= part.empty_mass
+        self.carburant_mass -= part.carburant_mass
+        del self.stages[0][name]
+        if len(self.stages[0])==0:
+            del self.stages[0]
+            for part in self.stages[0].values():
+                self.total_empty_mass -= part.carburant_mass
+                self.carburant_mass += part.carburant_mass
+
+    def set_thrust(self,name, throttle):
+        self.stages[0][name].throttle = throttle
+
+    def get_thrust(self,dt):
+        thrust = 0
+        carburant_mass = 0
+        for part in self.stages[0].keys():
+            (thr,carb) = self.stages[0][part].thrust(dt)
+            carburant_mass+=carb
+            thrust+=thr
+            if thr+carb==0 and part not in self.empty_part:
+                self.empty_part.append(part)
+        self.carburant_mass = carburant_mass
+        return thrust
+
+    def get_total_mass(self):
+        return self.total_empty_mass + self.carburant_mass
+
+    def get_carburant_mass(self):
+        return self.carburant_mass
+
+class Orbiter:
+    def __init__(self,stages):
+        self.orbit = None
+        self.empty_mass = 0
         self.r = Vector(0.0,0.0,0.0)
         self.v = Vector(0.0,0.0,0.0)
-        self.motor_flow = 1
-        self.motor_speed = 20000
         self.attractor = None
         self.orientation1 = 0
         self.orientation2 = 0
         self.last_E = 0
+        self.dv = Vector(0.0,0.0,0.0)
+        self.stages = stages
+        self.thrust = 0
 
     def set_state(self,r,v,t):
         self.r = r
@@ -53,7 +119,7 @@ class Orbiter:
         friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,1)
         if friction!=0:
             dv = Vector(0,0,0)
-            self.v += dt * friction/(self.empty_mass+self.carburant_mass) 
+            self.v += dt * friction/(self.stages.get_total_mass()) 
         self.r = self.r + self.v * dt
 
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
@@ -95,14 +161,51 @@ class Orbiter:
 
 
     def delta_v(self, t, dt, thrust):
-        if self.carburant_mass < 0:
-            print("Empty")
-            return
-        v_eject = Vector(-self.motor_speed*cos(self.orientation1), -self.motor_speed*sin(self.orientation1),0)
-        mass = self.empty_mass + self.carburant_mass
-        carburant_ejected_mass = self.motor_flow * thrust
-        dv = -1 * v_eject * log(mass/(mass-carburant_ejected_mass))
+
+        v_direction = Vector(cos(self.orientation1), sin(self.orientation1),0)
+        
+        mass = self.stages.get_total_mass()
+        thrust = self.stages.get_thrust(dt)
+        self.thrust = thrust/(1000*dt)
+        self.dv = v_direction * thrust/mass
+        
+        #v_eject = Vector(-self.motor_speed*cos(self.orientation1), -self.motor_speed*sin(self.orientation1),0)
+        #carburant_ejected_mass = self.motor_flow * thrust * dt
+        #self.dv = -1 * v_eject * (carburant_ejected_mass/(mass))
         #self.carburant_mass -= carburant_ejected_mass
-        self.update_position(t,dt, dv)
+        #self.thrust = (self.dv.norm()/dt)*mass/1000
+        #print(int(t),int(self.thrust),self.dv.norm(), self.r.norm() - int(self.attractor.radius), int(self.v.norm()))
+
+        self.update_position(t,dt, self.dv)
 
 
+if __name__ == '__main__':
+    s1 = Stages()
+    booster1 = Stage_Composant(1,2000,2000,6000)
+    booster2 = Stage_Composant(1,2000,2000,6000)
+    stage1 = Stage_Composant(1,2000,2000,2000)
+    s1.add_stage()
+    s1.add_part("Booster1",booster1)
+    s1.add_part("Booster2",booster2)
+    s1.add_part("Stage1",stage1)
+    s1.add_stage()
+    stage2 = Stage_Composant(1,3000,5000,5000)
+    s1.add_part("Stage2",stage2)
+    s1.add_stage()
+    stage3 = Stage_Composant(0,0,5000,0)
+    s1.add_part("Payload",stage3)
+
+    s1.get_thrust(100)
+    print(s1.stages)
+    print(s1.get_total_mass())
+
+
+    s1.sep_part("Booster1")
+    print(s1.stages)
+    s1.sep_part("Booster2")
+    print(s1.stages)
+    print(s1.get_total_mass())
+
+    s1.sep_part("Stage1")
+    print(s1.stages)
+    print(s1.get_total_mass())

@@ -56,7 +56,6 @@ class Orbit:
                 arg_pe = math.atan2(ev.y,ev.x)
                 if (h.z<0):
                     arg_pe=2*pi-arg_pe
-                    print("h.z<0")
                 
         else:
 
