@@ -5,7 +5,10 @@ class EventListener:
         self.key_event    = {}
         self.event = {}
 
-    def add_key_event(self,key,func):
+    def add_key_event(self,key,func,msg):
+        car = (pygame.key.name(key))
+ 
+        print("%s : %s"%(car,msg) )
         self.key_event[key] = func
 
 
@@ -19,7 +22,9 @@ class EventListener:
             
             if event.type == pygame.KEYDOWN:
                 key = event.key
+
                 if key in self.key_event.keys():
+
                     self.key_event[key]()
             
             if event.type in self.event.keys():

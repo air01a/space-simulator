@@ -5,12 +5,13 @@ from orbit import Orbit
 import logging, inspect
 
 class Stage_Composant:
-    def __init__(self,motor_flow, motor_speed, empty_mass, carburant_mass):
+    def __init__(self,motor_flow, motor_speed, empty_mass, carburant_mass,payload=False):
         self.motor_flow = motor_flow
         self.motor_speed = motor_speed
         self.empty_mass = empty_mass
         self.carburant_mass = carburant_mass
         self.throttle = 1
+        self.payload = payload
 
     def thrust(self,dt):
         if (self.carburant_mass>0):
@@ -38,7 +39,6 @@ class Stages:
             self.carburant_mass += part.carburant_mass
     
     def sep_part(self,name):
-        print(self.stages[0])
         part = self.stages[0][name]
         self.total_empty_mass -= part.empty_mass
         self.carburant_mass -= part.carburant_mass
@@ -59,7 +59,7 @@ class Stages:
             (thr,carb) = self.stages[0][part].thrust(dt)
             carburant_mass+=carb
             thrust+=thr
-            if thr+carb==0 and part not in self.empty_part:
+            if thr+carb==0 and part not in self.empty_part and not self.stages[0][part].payload:
                 self.empty_part.append(part)
         self.carburant_mass = carburant_mass
         return thrust
@@ -77,7 +77,7 @@ class Orbiter:
         self.r = Vector(0.0,0.0,0.0)
         self.v = Vector(0.0,0.0,0.0)
         self.attractor = None
-        self.orientation1 = 0
+        self.orientation1 = np.pi/2
         self.orientation2 = 0
         self.last_E = 0
         self.dv = Vector(0.0,0.0,0.0)
@@ -87,7 +87,7 @@ class Orbiter:
     def set_state(self,r,v,t):
         self.r = r
         self.v = v
-        if (self.v.norm()!=0):
+        if (self.r.norm()-self.attractor.radius>1000):
             self.orbit.set_from_state_vector(r,v)
             E = self.orbit.get_eccentric_from_true_anomaly()
             self.M0 = self.orbit.get_m0(E)
@@ -116,7 +116,7 @@ class Orbiter:
 
         if dv!=None:
             self.v += dv
-        friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,1)
+        friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,0.5)
         if friction!=0:
             dv = Vector(0,0,0)
             self.v += dt * friction/(self.stages.get_total_mass()) 

@@ -33,7 +33,6 @@ class TimeController():
         logging.debug("TimeSeed %i" % self.t_increment)
         logging.debug("----------------------------")
 
-        
     def delta_t(self):
         return self.t-self.last_t
 
@@ -43,7 +42,11 @@ class TimeController():
         if self.t_increment!=0:
             self.t += self.t_increment
         else:
+            delta =(time.time() - self.clock) - self.t
+
             self.t = time.time() - self.clock
+            if delta>0.1:
+                self.last_t = self.t-0.1
 
 
     def __init__(self, t0, event_listener, t_increment =1):
@@ -53,8 +56,8 @@ class TimeController():
         self.last_t = t0
         if t_increment==0:
             self.clock = time.time()
-        self.event_listener.add_key_event(120,self.time_accelerate)
-        self.event_listener.add_key_event(119,self.time_decelarate)
-        self.event_listener.add_key_event(99,self.time_normalize)
+        self.event_listener.add_key_event(120,self.time_accelerate,"Accelerate time")
+        self.event_listener.add_key_event(119,self.time_decelarate,"Deccelerate time")
+        self.event_listener.add_key_event(99,self.time_normalize,"Real time")
 
 

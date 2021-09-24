@@ -10,7 +10,7 @@ from event import EventListener
 from display import Display
 import logging
 from controller import Controller
-
+from numpy import pi
 logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
 
 
@@ -22,31 +22,34 @@ earth.set_atmosphere_condition(1.39,7900,120000)
 
 
 stages = Stages()
-booster1 = Stage_Composant(1800,2811,38000,237000)
-booster2 = Stage_Composant(1800,2811,38000,237000)
-stage1 = Stage_Composant(270,4000,12300,158500)
+booster1 = Stage_Composant(1800,3600,38000,237000)
+booster2 = Stage_Composant(1800,3600,38000,237000)
+stage1 = Stage_Composant(270,4200,12300,220000)
 stages.add_stage()
 stages.add_part("Booster1",booster1)
 stages.add_part("Booster2",booster2)
 stages.add_part("Stage1",stage1)
 stages.add_stage()
-stage2 = Stage_Composant(14.26,4361,4500,10500)
+stage2 = Stage_Composant(17,4800,2100,10500)
 stages.add_part("Stage2",stage2)
 stages.add_stage()
-stage3 = Stage_Composant(0,0,5000,0)
+stage3 = Stage_Composant(0,0,5000,0,True)
 stages.add_part("Payload",stage3)
 orbiter = Orbiter(stages)
 orbiter.set_attractor(earth)
 
 r = Vector([42162.0 * 1000, 0.0, 0.0])
 v = Vector([-200.0,-3074.0*1.1,0.0])
-zoom_ratio = 1
+zoom_ratio = 50
 #r = Vector([ -6203109.232224876, 2731162.6194017506, 249585.2228845337])
 #v = Vector( [ -1757.6448117882119, -9897.455983053283, -445.53566889162994])
 #r = Vector([ 0, 6378140, 0])
 #v = Vector( [ 0, 0, 0])
-r = Vector([ 6378140, 0, 0])
+#r = Vector([ 6498140, 0, 0])
+#v = Vector( [ 7800, 7800, 0])
+r = Vector([0 , 6378140, 0])
 v = Vector( [ 0, 0, 0])
+
 zoom_ratio = 50
 orbiter.set_state(r,v,0)
 (polar_orbit,cartesien_orbit) = orbiter.orbit.get_time_series()

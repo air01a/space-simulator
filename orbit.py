@@ -20,6 +20,10 @@ class Orbit:
     def set_attractor(self, attractor):
         self.attractor = attractor
 
+    def get_limit(self):
+        max = self.a*(1+self.e)
+        min = self.a*(1-self.e)
+        return(min,max)
 
     def set_elements(self, a, e, i, raan, arg_pe, f):
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i , raan, arg_pe, f)
@@ -167,6 +171,9 @@ class Orbit:
     def get_time_series(self):
         series=[]
         series_cartesien=[]
+
+        if (self.a==0):
+            return (series, series_cartesien)
         angle = 0
         increment = 2*pi / 30 
         angle_max = 2*pi
@@ -186,11 +193,8 @@ class Orbit:
         while angle<=angle_max:
             r=self._get_polar_ellipse(angle)
             series.append((angle,r))
-            if self.e<1:
-                rv = Vector(r*cos(angle),r*sin(angle),0)
-            else:
-                rv = Vector(r*cos(angle),r*sin(angle),0)
-
+            rv = Vector(r*cos(angle),r*sin(angle),0)
+    
             pos = self.get_eci(rv)
             series_cartesien.append(pos)
 
@@ -198,7 +202,18 @@ class Orbit:
             if (inc<pi/400):
                 inc = pi/400
             angle+=inc
-            
+        
+
+        min = self._get_polar_ellipse(0)
+        series.append((0,min))
+        series_cartesien.append((self.get_eci(Vector(min,0,0))))
+        if self.e<1:
+            max = self._get_polar_ellipse(pi)
+            series.append((pi,max))
+            series_cartesien.append((self.get_eci(Vector(-max,0,0))))
+        else:
+            series.append((None,None))
+            series_cartesien.append(None)
         return (series,series_cartesien)
 
     # get orbit period

@@ -34,6 +34,8 @@ class Display():
         self.y_center = (self.height-self.picture.get_height())/2
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
+    def change_center(self):
+        self.ship_centered = not self.ship_centered
 
     def __init__(self, event_listener, zoom_ratio=1):
         pygame.init()
@@ -51,10 +53,12 @@ class Display():
         self.earth = Vector(0,0,0)
 
         self.resize()
-
+        self.ship_centered = True
         self.orbit_factor = DEFAULT_EARTH_SIZE/(2*6378140)
-        event_listener.add_key_event(97, self.zoom_out)
-        event_listener.add_key_event(113, self.zoom_in)
+        event_listener.add_key_event(112, self.change_center,"Change screen center (earth vs ship)")
+        
+        event_listener.add_key_event(97, self.zoom_out, "Zoom out")
+        event_listener.add_key_event(113, self.zoom_in, "Zoom in")
 
         event_listener.add_event(VIDEORESIZE,self.resize)
 
@@ -68,38 +72,51 @@ class Display():
 
         return (x,y)
 
-    def draw(self, orbiter, cartesien_orbit):
-        self.screen.fill(BLACK)
+
+    def draw_trajectory(self,cartesien_orbit,earth_x, earth_y):
         color_elipse = (200,200,200)
         color_lines  = (218,238,241)
+        if len(cartesien_orbit)<2:
+            return
+        max = cartesien_orbit[-1]
+        (min_x, min_y, min_z) =  cartesien_orbit[-2]
+
+        (x2,y2,z2)=cartesien_orbit[-3]
+        for (x,y,z) in cartesien_orbit[:-2]:
+            # - y car dans ellipse, y vers le haut, dans plan y vers le bas
+            (xc,yc) = self.center_orbit( x,y, True, earth_x,earth_y)
+            (x2,y2) = self.center_orbit(x2,y2, True, earth_x,earth_y)
+            pygame.draw.line(self.screen,color_elipse,(xc,yc),(x2,y2))
+            pygame.draw.line(self.screen,color_lines,(xc,yc),(earth_x,earth_y))
+            (x2,y2) = (x,y)
+        
+        pygame.draw.line(self.screen,RED,self.center_orbit(min_x,min_y, True, earth_x,earth_y),(earth_x,earth_y))
+        if max!=None:
+            (max_x,max_y,max_z) = max
+            pygame.draw.line(self.screen,RED,self.center_orbit(max_x,max_y, True, earth_x,earth_y),(earth_x,earth_y))
+
+    def draw(self, orbiter, cartesien_orbit):
+        self.screen.fill(BLACK)
+
 
         (earth_x, earth_y) = (0,0)
         (orbiter_x,orbiter_y) = (orbiter.r.x, orbiter.r.y)
 
-        if orbiter.r.norm()-orbiter.attractor.radius < 100000:
+        if self.ship_centered:
             (earth_x, earth_y) = (-orbiter_x,-orbiter_y)
             (orbiter_x,orbiter_y) = (0,0)
 
         (earth_x, earth_y) = self.center_orbit(earth_x,earth_y)
         (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)
         pygame.draw.circle(self.screen, BLUE, (earth_x,earth_y), (6378140+120000)*self.orbit_factor*self.zoom_ratio)
+        self.draw_trajectory(cartesien_orbit,earth_x,earth_y)
         
-        (x2,y2,z2)=cartesien_orbit[-1]
-        for (x,y,z) in cartesien_orbit:
-            # - y car dans ellipse, y vers le haut, dans plan y vers le bas
-            (xc,yc) = self.center_orbit( x,y, True, earth_x,earth_y)
-            (x2,y2) = self.center_orbit(x2,y2, True, earth_x,earth_y)
-            pygame.draw.line(self.screen,color_elipse,(xc,yc),(x2,y2))
-            pygame.draw.line(self.screen,color_lines,(xc,yc),(earth_x,earth_y))
 
-            (x2,y2) = (x,y)
-        
         self.earth.x = earth_x - self.earth_diameter
         self.earth.y = earth_y - self.earth_diameter
 
 
         self.screen.blit(self.picture, (self.earth.x,self.earth.y))
-        #pygame.draw.rect(self.screen, RED,(self.earth.x,self.earth.y,self.earth.x+5550,self.earth.y+5550))
         pygame.draw.circle(self.screen, GREEN, (orbiter_x,orbiter_y), 5)
 
         head_x = 5*np.cos(orbiter.orientation1)

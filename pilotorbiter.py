@@ -26,12 +26,12 @@ class PilotOrbiter:
         self.event_listener = event_listener
         self.orbiter = orbiter
         self.thrust = False
-        self.event_listener.add_key_event(pygame.K_UP,self.engine_on)
-        self.event_listener.add_key_event(pygame.K_DOWN,self.engine_off)
-        self.event_listener.add_key_event(pygame.K_RIGHT,self.turn_right)
-        self.event_listener.add_key_event(pygame.K_LEFT,self.turn_left)
-        self.event_listener.add_key_event(pygame.K_ESCAPE,self.quit)
-        self.event_listener.add_key_event(pygame.K_ESCAPE,self.quit)
-        self.event_listener.add_key_event(pygame.K_z,self.display_param)
+        self.event_listener.add_key_event(pygame.K_UP,self.engine_on,"Start Engine")
+        self.event_listener.add_key_event(pygame.K_DOWN,self.engine_off,"Stop Engine")
+        self.event_listener.add_key_event(pygame.K_RIGHT,self.turn_right,"Change Ship orientation (to the right)")
+        self.event_listener.add_key_event(pygame.K_LEFT,self.turn_left,"Change Ship orientation (to the left)")
+        self.event_listener.add_key_event(pygame.K_z,self.display_param,"Print Kepler parameters")
+
+        self.event_listener.add_key_event(pygame.K_ESCAPE,self.quit,"Quit simulation")
 
 
