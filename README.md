@@ -1,4 +1,4 @@
-# space-simulator
+# space-simulator : Rocket simulator
 Python satellite simulator using newton &amp; kepler
 
 Python satellite simulator using kepler laws & newton (2D).
