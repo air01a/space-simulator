@@ -38,3 +38,7 @@ Attractor with children, sphere of influence, solar system modelisation
 Hohmann transfer calculator
 
 Graph improvment (not a priority)
+
+Organize and optimize code (at the beginning, this was just a small test to understand kepler equations)
+
+
