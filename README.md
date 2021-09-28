@@ -8,7 +8,17 @@ Arrow left and right to orient the spacecraft, upper arrow to start engine, down
 
 Final goal is to be able to start a rocket from earth and go to the moon.
 
+
+## Curent Work
+Display all parameters ("time;thrust;altitude;velocity;carburant;(perihelion,aphelion)")
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/data.png)
+
+Show current trajectory (kepler equations)
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/trajectory.png)
+
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/trajectory2.png)
+
+Propagate Kepler time equation to accelerate time
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/kepler_propagation.gif)
+
+Manage Drag Force in atmosphere, rocket multi staging, motors parameters, flight management (attitude change with altitude, speed, or perihelion/aphelion), ...
