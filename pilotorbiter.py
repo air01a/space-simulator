@@ -4,10 +4,10 @@ from numpy import pi
 class PilotOrbiter:
 
     def engine_on(self):
-        self.thrust = True
+        self.orbiter.thrust = True
     
     def engine_off(self):
-        self.thrust = False
+        self.orbiter.thrust = False
     
     def turn_right(self):
         self.orbiter.orientation1 -= pi/20
@@ -17,7 +17,7 @@ class PilotOrbiter:
          
     def display_param(self):
         print(self.orbiter.orbit.a, self.orbiter.orbit.e, self.orbiter.orbit.i, self.orbiter.orbit.arg_pe, self.orbiter.orbit.raan, self.orbiter.orbit.f)
-
+        print(self.orbiter.r, self.orbiter.v)
     def quit(self):
         new_event = pygame.event.Event(pygame.QUIT, unicode='a', key=ord('a'))
         pygame.event.post(new_event)

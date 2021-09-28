@@ -16,6 +16,8 @@ class Orbit:
         self.epoch = 0
         self.SMALL_NUMBER = 1e-15
         self.MAX_ITERATIONS = 100
+        self.polar = []
+        self.cartesien = []
 
     def set_attractor(self, attractor):
         self.attractor = attractor
@@ -168,7 +170,7 @@ class Orbit:
         return r
 
     # return ellipse points
-    def get_time_series(self):
+    def calculate_time_series(self):
         series=[]
         series_cartesien=[]
 
@@ -214,7 +216,8 @@ class Orbit:
         else:
             series.append((None,None))
             series_cartesien.append(None)
-        return (series,series_cartesien)
+        self.polar = series
+        self.cartesien = series_cartesien
 
     # get orbit period
     def get_orbital_period(self):

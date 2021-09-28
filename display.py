@@ -7,6 +7,7 @@ BLUE  =       (  0,   0, 255)
 RED   =       (255,   0,   0)
 GREEN =       (  0, 200,   0)
 BLACK =       (  0,   0,   0)
+ORANGE =      (255, 165,   0)
 DEFAULT_EARTH_SIZE = 111
 
 
@@ -95,20 +96,26 @@ class Display():
             (max_x,max_y,max_z) = max
             pygame.draw.line(self.screen,RED,self.center_orbit(max_x,max_y, True, earth_x,earth_y),(earth_x,earth_y))
 
-    def draw(self, orbiter, cartesien_orbit):
+    def draw(self, orbiters):
         self.screen.fill(BLACK)
 
-
+        orbiter = orbiters.get_current_orbiter()
         (earth_x, earth_y) = (0,0)
         (orbiter_x,orbiter_y) = (orbiter.r.x, orbiter.r.y)
 
+        translate = (0,0)
         if self.ship_centered:
+            translate = (orbiter_x,orbiter_y)
+
             (earth_x, earth_y) = (-orbiter_x,-orbiter_y)
             (orbiter_x,orbiter_y) = (0,0)
 
         (earth_x, earth_y) = self.center_orbit(earth_x,earth_y)
         (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)
         pygame.draw.circle(self.screen, BLUE, (earth_x,earth_y), (6378140+120000)*self.orbit_factor*self.zoom_ratio)
+
+
+        cartesien_orbit = orbiter.orbit.cartesien
         self.draw_trajectory(cartesien_orbit,earth_x,earth_y)
         
 
@@ -125,5 +132,14 @@ class Display():
         pygame.draw.circle(self.screen, RED, (orbiter_x+head_x,orbiter_y+head_y), 2)
         pygame.draw.line(self.screen, GREEN, (orbiter_x,orbiter_y),(orbiter_x+orbiter.v.x/125,orbiter_y-orbiter.v.y/125), int(2))
 
+
+        for orbiter_name in (orbiters.get_orbiters().keys()):
+            if orbiter_name!=orbiters.current_orbiter:
+                orbiter = orbiters.get_orbiter(orbiter_name)
+                (tx,ty) = translate
+                (orbiter_x,orbiter_y) = (orbiter.r.x-tx, orbiter.r.y-ty)
+                
+                (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)
+                pygame.draw.circle(self.screen, ORANGE, (orbiter_x,orbiter_y), 3)
         pygame.display.flip()
 

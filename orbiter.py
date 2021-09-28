@@ -48,6 +48,7 @@ class Stages:
             for part in self.stages[0].values():
                 self.total_empty_mass -= part.carburant_mass
                 self.carburant_mass += part.carburant_mass
+        return part
 
     def set_thrust(self,name, throttle):
         self.stages[0][name].throttle = throttle
@@ -82,7 +83,8 @@ class Orbiter:
         self.last_E = 0
         self.dv = Vector(0.0,0.0,0.0)
         self.stages = stages
-        self.thrust = 0
+        self.thrust = False
+        self.last_a = Vector(0,0,0)
 
     def set_state(self,r,v,t):
         self.r = r
@@ -106,21 +108,45 @@ class Orbiter:
         angle = atan2(self.r.y,self.r.x)
         return Vector(ra*cos(angle), ra*sin(angle),0)
 
-    def update_position(self, t,dt, dv=None):
-        if (self.r.norm() > self.attractor.radius):
-            ra = (self.r.x**2+self.r.y**2)**0.5
-            angle = atan2(self.r.y,self.r.x)
-            a = Vector(-cos(angle)*self.attractor.mu/ra**2,-sin(angle)*self.attractor.mu/ra**2,0)
-            self.v = self.v + a * dt
+    def update_position(self, t,dt):
+        trajectory_update = False
 
+        delta_t_array = []
+        if dt<0.1:
+            delta_t_array.append(dt)
+        else:
+            t_increment=0
+            while t_increment<dt:
+                increment = min(0.1,dt-t_increment)
+                delta_t_array.append(increment)
+                t_increment += increment
 
-        if dv!=None:
-            self.v += dv
-        friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,0.5)
-        if friction!=0:
-            dv = Vector(0,0,0)
-            self.v += dt * friction/(self.stages.get_total_mass()) 
-        self.r = self.r + self.v * dt
+        for dt in delta_t_array:
+            if self.thrust:
+                dv = self.delta_v(t,dt)
+            else:
+                dv = None
+
+            if (self.r.norm() > self.attractor.radius):
+                ra = (self.r.x**2+self.r.y**2)**0.5
+                angle = atan2(self.r.y,self.r.x)
+                a = Vector(-cos(angle)*self.attractor.mu/ra**2,-sin(angle)*self.attractor.mu/ra**2,0)
+            else:
+                a = Vector(0,0,0)
+
+            if dv!=None:
+                self.v += dv
+                trajectory_update = True
+
+            friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,0.5)
+            if friction!=0:
+                dv = Vector(0,0,0)
+                a += friction/(self.stages.get_total_mass()) 
+                trajectory_update = True
+            
+            self.v += (a+self.last_a)/2*dt
+            self.last_a = a
+            self.r = self.r + self.v * dt
 
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("Position "+str(self.r))
@@ -129,8 +155,11 @@ class Orbiter:
         logging.debug("Velocity "+str(self.v.norm()))
         logging.debug("----------------------------")
 
-        if dv!=None and self.r.norm() > self.attractor.radius and self.v.norm()>0:
+        if trajectory_update and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
+            self.orbit.calculate_time_series()
+        
+        if (self.r.norm() < self.attractor.radius):
             return True
             #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
         return False
@@ -151,7 +180,6 @@ class Orbiter:
         self.r = self.orbit.get_eci(r)
         self.v = self.orbit.get_eci(v)
 
-
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("dt %i" % dt)
         logging.debug("E %r" % E)
@@ -159,8 +187,13 @@ class Orbiter:
         logging.debug("v %s" % str(self.v))
         logging.debug("----------------------------")
 
+        if (self.r.norm() < self.attractor.radius):
+            return True
+            #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
+        return False
 
-    def delta_v(self, t, dt, thrust):
+
+    def delta_v(self, t, dt):
 
         v_direction = Vector(cos(self.orientation1), sin(self.orientation1),0)
         
@@ -176,8 +209,38 @@ class Orbiter:
         #self.thrust = (self.dv.norm()/dt)*mass/1000
         #print(int(t),int(self.thrust),self.dv.norm(), self.r.norm() - int(self.attractor.radius), int(self.v.norm()))
 
-        self.update_position(t,dt, self.dv)
+        return self.dv
 
+class Orbiters:
+    def __init__(self):
+        self.orbiters={}
+        self.current_orbiter = None
+        self.deleted_orbiters = []
+
+    def add_orbiter(self,name, orbiter):
+        self.orbiters[name] = (orbiter)
+        if len(self.orbiters)==1:
+            self.current_orbiter = name
+    
+    def set_active_orbiter(self,name):
+        self.current_orbiter = name
+
+    def get_current_orbiter(self):
+        return self.orbiters[self.current_orbiter]
+    
+    def get_orbiter(self, name):
+        return self.orbiters[name]
+
+    def get_orbiters(self):
+        return self.orbiters
+
+    def remove(self, name):
+        self.deleted_orbiters.append(name)
+
+    def apply_remove(self):
+        for orb in self.deleted_orbiters:
+            if orb in self.orbiters.keys():
+                del self.orbiters[orb]
 
 if __name__ == '__main__':
     s1 = Stages()
