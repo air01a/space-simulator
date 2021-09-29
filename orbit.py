@@ -128,9 +128,10 @@ class Orbit:
     def get_eccentric_from_true_anomaly(self):
         if self.e<1:
             return 2 * arctan( tan (self.f / 2) / ((1+self.e)/(1-self.e)) ** 0.5 )
-
-        return 2 * arctan( tanh (self.f / 2) / ((1+self.e)/(self.e-1)) ** 0.5 )
-
+        if self.e!=1:
+            return 2 * arctan( tanh (self.f / 2) / ((1+self.e)/(self.e-1)) ** 0.5 )
+        return 0
+            
     def get_eccentricity(self,r,v):
         return ((v.norm() ** 2 - self.mu / r.norm()) * r - r.dot(v) * v ) / self.mu
 

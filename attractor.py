@@ -44,15 +44,14 @@ class Attractor:
             return self.p0 * math.exp(-h/self.h0)
         return 0
 
-    def get_drag_force(self,h, v, cross_section, drag_coefficient):
+    def get_drag_force(self,h, v, drag_x_surf):
         density = self.get_density(h)
-
         if density ==0:
             return 0
         if v.norm()==0:
             return 0
 
-        f = 1/2 * density * v.norm()**2 * cross_section * drag_coefficient
+        f = 1/2 * density * v.norm()**2 * drag_x_surf
         F = -(1/v.norm()) * v * f
 
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))

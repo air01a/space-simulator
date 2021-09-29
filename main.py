@@ -11,6 +11,9 @@ from display import Display
 import logging
 from controller import Controller
 from numpy import pi
+
+
+ACCELERATE_MODE = False
 logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
 
 
@@ -22,18 +25,18 @@ orbiters = Orbiters()
 
 
 stages = Stages()
-booster1 = Stage_Composant(1800,2600,38000,237000)
-booster2 = Stage_Composant(1800,2600,38000,237000)
+booster1 = Stage_Composant(1800,2800,38000,237000,30)
+booster2 = Stage_Composant(1800,2800,38000,237000,18)
 stage1 = Stage_Composant(270,4200,12300,220000)
 stages.add_stage()
 stages.add_part("Booster1",booster1)
 stages.add_part("Booster2",booster2)
 stages.add_part("Stage1",stage1)
 stages.add_stage()
-stage2 = Stage_Composant(17,5000,2100,12500)
+stage2 = Stage_Composant(17,6000,2100,12500)
 stages.add_part("Stage2",stage2)
 stages.add_stage()
-stage3 = Stage_Composant(0,0,6000,0,True)
+stage3 = Stage_Composant(0,0,10000,0,0,True)
 stages.add_part("Payload",stage3)
 orbiter = Orbiter(stages)
 orbiter.set_attractor(earth)
@@ -87,7 +90,7 @@ while not done:
                 orbiter.v = Vector(0,0,0) 
                 orbiter.r = orbiter.attractor.radius * orbiter.r/orbiter.r.norm()  
     display.draw(orbiters)
-    time_controller.update_time()
+    time_controller.update_time(ACCELERATE_MODE)
     
    
 controller.stop()

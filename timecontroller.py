@@ -36,8 +36,14 @@ class TimeController():
     def delta_t(self):
         return self.t-self.last_t
 
-    def update_time(self):
+    def update_time(self,accelerate = False):
+        
         self.last_t = self.t
+
+        if accelerate:
+            self.t += 0.1
+            return
+        
 
         if self.t_increment!=0:
             self.t += self.t_increment

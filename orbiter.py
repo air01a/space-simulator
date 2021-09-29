@@ -3,15 +3,17 @@ from math import atan2, cos, sin, log
 import numpy as np
 from orbit import Orbit
 import logging, inspect
+from constants import max_delta_t
 
 class Stage_Composant:
-    def __init__(self,motor_flow, motor_speed, empty_mass, carburant_mass,payload=False):
+    def __init__(self,motor_flow, motor_speed, empty_mass, carburant_mass,drag_x_surf=0, payload=False):
         self.motor_flow = motor_flow
         self.motor_speed = motor_speed
         self.empty_mass = empty_mass
         self.carburant_mass = carburant_mass
         self.throttle = 1
         self.payload = payload
+        self.drag_x_surf = drag_x_surf
 
     def thrust(self,dt):
         if (self.carburant_mass>0):
@@ -26,6 +28,7 @@ class Stages:
         self.empty_part = []
         self.total_empty_mass = 0
         self.carburant_mass = 0
+        self.drag_x_surf = 0
 
     def add_stage(self):
         self.stages.append({})
@@ -37,11 +40,13 @@ class Stages:
             self.total_empty_mass += part.carburant_mass
         else:
             self.carburant_mass += part.carburant_mass
+        self.drag_x_surf += part.drag_x_surf
     
     def sep_part(self,name):
         part = self.stages[0][name]
         self.total_empty_mass -= part.empty_mass
         self.carburant_mass -= part.carburant_mass
+        self.drag_x_surf -= part.drag_x_surf
         del self.stages[0][name]
         if len(self.stages[0])==0:
             del self.stages[0]
@@ -112,12 +117,12 @@ class Orbiter:
         trajectory_update = False
 
         delta_t_array = []
-        if dt<0.1:
+        if dt<max_delta_t:
             delta_t_array.append(dt)
         else:
             t_increment=0
             while t_increment<dt:
-                increment = min(0.1,dt-t_increment)
+                increment = min(max_delta_t,dt-t_increment)
                 delta_t_array.append(increment)
                 t_increment += increment
 
@@ -138,7 +143,7 @@ class Orbiter:
                 self.v += dv
                 trajectory_update = True
 
-            friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,50,0.5)
+            friction = self.attractor.get_drag_force(self.r.norm()-self.attractor.radius,self.v,self.stages.drag_x_surf)
             if friction!=0:
                 dv = Vector(0,0,0)
                 a += friction/(self.stages.get_total_mass()) 
