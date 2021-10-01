@@ -1,8 +1,12 @@
+########################################
+# Small Vector management class
+########################################
+
 import numpy as np
 
 class Vector: 
 
-
+    # Create Vector instance from list or values
     def __init__(self, x, y=0, z=0):
 
         if isinstance(x,list):
@@ -10,7 +14,7 @@ class Vector:
         else:
             (self.x, self.y, self.z) = (np.float64(x), np.float64(y),np.float64( z))
         
-    
+    # Multiply vector
     def __mul__(self, factor):
         if isinstance(factor,(int,float)):
             x = factor * self.x
@@ -21,13 +25,15 @@ class Vector:
             return self.dot(factor)
         return None
 
-
+    # Calculate norm of the vector
     def norm(self):
         return ( self.x**2 + self.y**2 + self.z**2 ) ** 0.5
 
+    # Enable use of * sign to multiply vector
     def __rmul__(self,factor):
         return self.__mul__(factor)
     
+    # Enable use of + sign to add vector
     def __add__(self, v):
 
         if (isinstance(v,Vector)):
@@ -41,13 +47,14 @@ class Vector:
             u[i] += v[i]
         return self.__class__(u)
 
+    # Calculate dot of two vectors
     def dot(self, v):
         if not isinstance(v, Vector):
             return None
         return (self.x * v.x + self.y * v.y + self.z * v.z)
         return sum(a * b for a, b in zip(self, v))
 
-
+    # Calculate cross of two vectors
     def cross(self,v):
         if not isinstance(v, Vector):
             return None
@@ -58,7 +65,7 @@ class Vector:
 
         return self.__class__(x,y,z)
 
-
+    # Enable use of - sign to substracte vector
     def __sub__(self,v):
         return self.__add__(v*-1)
 
@@ -70,17 +77,10 @@ class Vector:
     def __iter__(self):
         return self.to_list().__iter__()
 
+    # Convert vector to list
     def to_list(self):
         return [self.x, self.y, self.z]
-
+        
+    # Convert vector to str
     def __str__(self):
         return "[ %r, %r, %r]" %(self.x,self.y,self.z)
-
-if __name__ == '__main__':
-    v = Vector(1,3,-5)
-    print(v.cross(Vector(4,9,2)))
-    print(v+Vector(1,2,3))    
-    print(v-Vector(1,2,30))
-    print(v.dot(Vector(4,-2,-1)))
-    print(v/3.0)
-    print(v.norm())

@@ -1,3 +1,8 @@
+########################################
+# Orbit management (kepler)
+########################################
+
+
 import numpy as np
 import math
 from numpy import cos, sin, pi, tan, arccos, arctan, arcsin, cross, sinh, tanh, cosh
@@ -19,17 +24,22 @@ class Orbit:
         self.polar = []
         self.cartesien = []
 
+    # Ratach orbit to a planet
     def set_attractor(self, attractor):
         self.attractor = attractor
-
+    
+    # Define aphelion and perihelion
     def get_limit(self):
         max = self.a*(1+self.e)
         min = self.a*(1-self.e)
         return(min,max)
 
+    # Define kepler elements
     def set_elements(self, a, e, i, raan, arg_pe, f):
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i , raan, arg_pe, f)
 
+
+    # Calculate kelpler from velocity and position
     def set_from_state_vector(self,r,v):
         mu = self.mu
 
@@ -114,27 +124,30 @@ class Orbit:
         logging.debug("----------------------------")
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i, raan, arg_pe, f)
 
+    # Return period 
     def get_period(self):
         return self.get_orbital_period()
 
     def set_epoch(self, epoch):
         self.epoch = epoch
 
+    # Calculate node vector
     def get_node_vector(self, h):
         k = Vector(0.0,0.0,1.0)
         return k.cross(h)
 
-
+    # Calculate eccentricity from true anomaly
     def get_eccentric_from_true_anomaly(self):
         if self.e<1:
             return 2 * arctan( tan (self.f / 2) / ((1+self.e)/(1-self.e)) ** 0.5 )
         if self.e!=1:
             return 2 * arctan( tanh (self.f / 2) / ((1+self.e)/(self.e-1)) ** 0.5 )
         return 0
-            
+
     def get_eccentricity(self,r,v):
         return ((v.norm() ** 2 - self.mu / r.norm()) * r - r.dot(v) * v ) / self.mu
 
+    # Calculate orbiter energy
     def get_energy(self,r,v):
         return v.norm() ** 2 / 2 - self.mu / r.norm()
 
@@ -166,8 +179,10 @@ class Orbit:
         elif self.e==1:
             r = self.a/(1+self.e*cos(angle))
         else:
-            r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
-
+            if 1+self.e*cos(angle)!=0:
+                r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
+            else:
+                r = r = self.a*(1-self.e**2)/(1+self.e*cos(angle+0.0000001))
         return r
 
     # return ellipse points
@@ -294,40 +309,7 @@ class Orbit:
 
         return E
 
-
-
-    '''def get_eccentricity_from_mean(self, M, tolerance=1e-15):
-        if self.e==0:
-            return M
-
-        if self.e<1:
-            mysin = sin
-            mycos = cos
-        else:
-            mysin = sinh
-            mycos = cosh
-
-        m_norm = math.fmod(M, 2 * np.pi)
-        E0 = M + (-1 / 2 * self.e ** 3 + self.e + (self.e ** 2 + 3 / 2 * mycos(M) * self.e ** 3) * mycos(M)) * mysin(M)
-        dE = tolerance + 1
-        count = 0
-        
-        while dE > tolerance:
-            t1 = mycos(E0)
-            t2 = -1 + self.e * t1
-            t3 = mysin(E0)
-            t4 = self.e * t3
-            t5 = -E0 + t4 + m_norm
-            t6 = t5 / (1 / 2 * t5 * t4 / t2 + t2)
-            E = E0 - t5 / ((1 / 2 * t3 - 1 / 6 * t1 * t6) * self.e * t6 + t2)
-            dE = abs(E - E0)
-            E0 = E
-            count += 1
-            if count == self.MAX_ITERATIONS:
-                raise Exception('Did not converge after {n} iterations. (e={e!r}, M={M!r})'.format(n=self.MAX_ITERATIONS, e=self.e, M=M))
-        print("meth 1 : %r" % E)
-        return E '''
-
+    # Calculate velocity from Eccentricity
     def get_velocity(self, E, r):
         ra = (r.x**2+r.y**2)**0.5
 

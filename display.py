@@ -50,7 +50,6 @@ class Display():
         self.screen = pygame.display.set_mode(self.size,pygame.RESIZABLE)
         self.earth_main_sprite = pygame.image.load("images/earth.png")
         self.picture = pygame.transform.scale(self.earth_main_sprite, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1, round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1))
-        #self.earth = self.picture.get_rect()
         self.earth = Vector(0,0,0)
 
         self.resize()
@@ -100,6 +99,8 @@ class Display():
         self.screen.fill(BLACK)
 
         orbiter = orbiters.get_current_orbiter()
+        if orbiter == None:
+            return
         (earth_x, earth_y) = (0,0)
         (orbiter_x,orbiter_y) = (orbiter.r.x, orbiter.r.y)
 

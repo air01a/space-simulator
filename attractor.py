@@ -1,3 +1,8 @@
+########################################
+# Define attractor (planets)
+########################################
+
+
 import math
 from vector import Vector
 from orbit import Orbit
@@ -62,27 +67,6 @@ class Attractor:
         logging.debug("----------------------------")
 
         return F
-
-
-
-if __name__ == '__main__':
-    import constants
-    earth = Attractor(Vector(0,0,0),6378140.0,constants.earth_mu)
-
-    v = Vector(1,1,1)
-    earth.set_atmosphere_condition(1.39,7.9,120)
-
-    print(earth.get_density(10))
-    print(earth.get_drag_force(0, v, 1,1))
-
-    print(v.cross(Vector(4,9,2)))
-    print(v+Vector(1,2,3))    
-    print(v-Vector(1,2,30))
-    print(v.dot(Vector(4,-2,-1)))
-    print(v/3.0)
-    print(v.norm())
-
-    
 
 
         
