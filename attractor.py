@@ -17,6 +17,7 @@ class Attractor:
         self.parent = None
         self.child = []
         self.r = r
+
         self.mu = mu
         self.radius = radius
         self.atmosphere_limit = 0
@@ -49,6 +50,9 @@ class Attractor:
             return self.p0 * math.exp(-h/self.h0)
         return 0
 
+    def add_child(self,child):
+        self.child.append(child)
+
     def get_drag_force(self,h, v, drag_x_surf):
         density = self.get_density(h)
         if density ==0:
@@ -67,6 +71,9 @@ class Attractor:
         logging.debug("----------------------------")
 
         return F
+
+    def update_position(self,t):
+        (self.r,self.v) = self.orbit.update_position(t)
 
 
         

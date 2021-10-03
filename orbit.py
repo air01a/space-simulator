@@ -23,6 +23,7 @@ class Orbit:
         self.MAX_ITERATIONS = 100
         self.polar = []
         self.cartesien = []
+        self.M0 = 0
 
     # Ratach orbit to a planet
     def set_attractor(self, attractor):
@@ -37,6 +38,7 @@ class Orbit:
     # Define kepler elements
     def set_elements(self, a, e, i, raan, arg_pe, f):
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i , raan, arg_pe, f)
+
 
 
     # Calculate kelpler from velocity and position
@@ -336,3 +338,30 @@ class Orbit:
         else:
             M0 = self.e*sinh(E)-E
         return M0
+
+
+    # Propagate kepler equation to calculate Velocity and position
+    # Use for time acceleration
+    def update_position(self, t):
+        dt = t-self.epoch
+        if self.a !=0:
+            
+            M = self.M0 + (dt)*(self.mu/(abs(self.a)**3))**0.5
+            try:  
+                E = self.get_eccentricity_from_mean(M)
+                self.last_E = E
+            except:
+                E = self.last_E
+
+
+            (r,v) = self.get_state(E)
+            r = self.get_eci(r)
+            v = self.get_eci(v)
+
+            logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
+            logging.debug("dt %i" % dt)
+            logging.debug("E %r" % E)
+            logging.debug("r %s" % str(r))
+            logging.debug("v %s" % str(v))
+            logging.debug("----------------------------")
+            return (r,v)

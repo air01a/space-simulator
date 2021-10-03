@@ -21,6 +21,10 @@ earth = Attractor(Vector(0,0,0),6378140.0,constants.earth_mu)
 earth.set_atmosphere_condition(1.39,7900,120000)
 (orbiter_name,orbiter) = Load_Orbiters.get_orbiter("rockets/ariane5.rocket")
 
+moon = Attractor(Vector(384000*1000,0,0),constants.moon_mass,constants.moon_mu)
+moon.set_orbit_parameters(384000*1000,0,pi,0,0,0)
+moon.orbit.update_position(0)
+earth.add_child(moon)
 #r = Vector([42162.0 * 1000, 0.0, 0.0])
 #v = Vector([-200.0,-3074.0*1.1,0.0])
 #r = Vector([ -6203109.232224876, 2731162.6194017506, 249585.2228845337])
@@ -73,6 +77,8 @@ while not done:
 
         if thrust and time_controller.t_increment>10:
             time_controller.t_increment = 10
+    moon.update_position(time_controller.t)
+
     display.draw(orbiters)
     time_controller.update_time()
     

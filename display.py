@@ -17,22 +17,30 @@ class Display():
 
     def resize(self):
         self.width, self.height = pygame.display.Info().current_w, pygame.display.Info().current_h
-        self.x_center = (self.width-self.picture.get_width())/2
-        self.y_center = (self.height-self.picture.get_height())/2
+        self.x_center = (self.width-self.earth_picture.get_width())/2
+        self.y_center = (self.height-self.earth_picture.get_height())/2
 
 
     def zoom_out(self):
         self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1
-        self.picture = pygame.transform.scale(self.earth_main_sprite, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio), round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
-        self.x_center = (self.width-self.picture.get_width())/2
-        self.y_center = (self.height-self.picture.get_height())/2
+
+        size = max(20, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
+        self.earth_picture = pygame.transform.scale(self.earth_main_sprite, (size,size))
+        self.moon_picture = pygame.transform.scale(self.moon_main_sprite, (round(size*0.27), round(size*0.27)))
+
+        self.x_center = (self.width-self.earth_picture.get_width())/2
+        self.y_center = (self.height-self.earth_picture.get_height())/2
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
     def zoom_in(self):
         self.zoom_ratio = self.zoom_ratio-1.0 if self.zoom_ratio>1 else self.zoom_ratio*0.9
-        self.picture = pygame.transform.scale(self.earth_main_sprite, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio), round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
-        self.x_center = (self.width-self.picture.get_width())/2
-        self.y_center = (self.height-self.picture.get_height())/2
+        
+        size = max(20, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
+        self.earth_picture = pygame.transform.scale(self.earth_main_sprite, (size,size))
+        self.moon_picture = pygame.transform.scale(self.moon_main_sprite, (round(size*0.27), round(size*0.27)))
+
+        self.x_center = (self.width-self.earth_picture.get_width())/2
+        self.y_center = (self.height-self.earth_picture.get_height())/2
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
     def change_center(self):
@@ -49,8 +57,15 @@ class Display():
 
         self.screen = pygame.display.set_mode(self.size,pygame.RESIZABLE)
         self.earth_main_sprite = pygame.image.load("images/earth.png")
-        self.picture = pygame.transform.scale(self.earth_main_sprite, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1, round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1))
+        self.earth_picture = pygame.transform.scale(self.earth_main_sprite, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1, round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1))
         self.earth = Vector(0,0,0)
+
+
+
+        self.moon_main_sprite = pygame.image.load("images/moon.png")
+        self.moon_picture = pygame.transform.scale(self.moon_main_sprite, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio*0.27)+1, round(DEFAULT_EARTH_SIZE*self.zoom_ratio)+1))
+
+
 
         self.resize()
         self.ship_centered = True
@@ -103,6 +118,7 @@ class Display():
             return
         (earth_x, earth_y) = (0,0)
         (orbiter_x,orbiter_y) = (orbiter.r.x, orbiter.r.y)
+        (moon_x,moon_y) = (orbiter.attractor.child[0].r.x,orbiter.attractor.child[0].r.y)
 
         translate = (0,0)
         if self.ship_centered:
@@ -111,8 +127,12 @@ class Display():
             (earth_x, earth_y) = (-orbiter_x,-orbiter_y)
             (orbiter_x,orbiter_y) = (0,0)
 
+        (tx,ty) = translate
+
         (earth_x, earth_y) = self.center_orbit(earth_x,earth_y)
         (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)
+        (moon_x, moon_y) = self.center_orbit(moon_x-tx,moon_y-ty)
+
         pygame.draw.circle(self.screen, BLUE, (earth_x,earth_y), (6378140+120000)*self.orbit_factor*self.zoom_ratio)
 
 
@@ -120,11 +140,16 @@ class Display():
         self.draw_trajectory(cartesien_orbit,earth_x,earth_y)
         
 
+        self.screen.blit(self.moon_picture, (int(moon_x- self.earth_diameter*0.27),int(moon_y- self.earth_diameter*0.27)))
+
         self.earth.x = earth_x - self.earth_diameter
         self.earth.y = earth_y - self.earth_diameter
 
 
-        self.screen.blit(self.picture, (self.earth.x,self.earth.y))
+        self.screen.blit(self.earth_picture, (self.earth.x,self.earth.y))
+
+
+
         pygame.draw.circle(self.screen, GREEN, (orbiter_x,orbiter_y), 5)
 
         head_x = 5*np.cos(orbiter.orientation1)
@@ -137,7 +162,6 @@ class Display():
         for orbiter_name in (orbiters.get_orbiters().keys()):
             if orbiter_name!=orbiters.current_orbiter:
                 orbiter = orbiters.get_orbiter(orbiter_name)
-                (tx,ty) = translate
                 (orbiter_x,orbiter_y) = (orbiter.r.x-tx, orbiter.r.y-ty)
                 
                 (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)

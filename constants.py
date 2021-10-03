@@ -18,6 +18,7 @@ jupiter_mass = sun_mass / 1.047348644e3
 saturn_mass  = sun_mass / 3.4979018e3
 uranus_mass  = sun_mass / 2.290298e4
 neptune_mass = sun_mass / 1.941226e4
+moon_mass    = 7.34767309e22
 
 sun_radius_equatorial     = 696000    * _kilo
 mercury_radius_equatorial = 2439.7    * _kilo
@@ -28,6 +29,8 @@ jupiter_radius_equatorial = 71492     * _kilo
 saturn_radius_equatorial  = 60268     * _kilo
 uranus_radius_equatorial  = 25559     * _kilo
 neptune_radius_equatorial = 24764     * _kilo
+moon_radius_equatorial    = 1737.400  * _kilo
+
 
 mercury_mu = mercury_mass * constant_of_gravitation
 venus_mu   = venus_mass   * constant_of_gravitation
@@ -36,6 +39,8 @@ jupiter_mu = jupiter_mass * constant_of_gravitation
 saturn_mu  = saturn_mass  * constant_of_gravitation
 uranus_mu  = uranus_mass  * constant_of_gravitation
 neptune_mu = neptune_mass * constant_of_gravitation
+moon_mu    = moon_mass    * constant_of_gravitation
+
 
 mercury_radius_polar = mercury_radius_mean = mercury_radius_equatorial
 venus_radius_polar = venus_radius_mean = venus_radius_equatorial
