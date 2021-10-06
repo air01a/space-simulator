@@ -8,9 +8,8 @@ from vector import Vector
 from orbit import Orbit
 import logging, inspect
 
-
 class Attractor:
-
+test
     def __init__(self, name, r, radius, mu=None, mass=None, soi=0):
         self.mass = mass
         self.soi =  soi

@@ -230,10 +230,12 @@ class Orbit:
         increment = 2*pi / points 
         angle_max = 2*pi
 
+
+        # Calculate max and min
         perihelion = self._get_polar_ellipse(0)
         aphelion = self._get_polar_ellipse(pi)
 
-
+        # Define min and max angle to draw
         if self.e==1:
             angle = 0
             angle_max = pi/3
@@ -247,10 +249,15 @@ class Orbit:
             coeff = 1.5/(perihelion-aphelion)
             absc = 0.5-1.5/(perihelion-aphelion)*aphelion
 
+
+        # If we go outside the current attractor SOI
+        # Calculate angle of exit and only draw points inside SOI
         if self.attractor.soi>0 and (aphelion > self.attractor.soi or self.e>=1):
             (angle1,angle2) = self.get_soi_collision_angle()
             angle = min(angle1,angle2)
             angle_max = max(angle1,angle2)
+
+        # Calculate points
         while angle<=(angle_max+increment):
             r=self._get_polar_ellipse(angle)
             series.append((angle,r))
@@ -265,6 +272,7 @@ class Orbit:
             else:
                 angle+=increment
         
+        # Add perhielion and aphelion to data
         series.append((0,perihelion))
         series_cartesien.append((self.get_eci(Vector(perihelion,0,0))))
         if self.e<1:
@@ -280,7 +288,7 @@ class Orbit:
     def get_orbital_period(self):
         return 2*np.pi*((self.a**3/self.mu)**0.5)
 
-
+    # Calculate R and V with Eccentric anomaly
     def get_state(self, E):
         anomaly = self.true_anomaly_from_eccentric(E)
 
