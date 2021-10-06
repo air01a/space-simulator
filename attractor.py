@@ -3,7 +3,7 @@
 ########################################
 
 
-import math
+from math import atan2, sin, cos, exp
 from vector import Vector
 from orbit import Orbit
 import logging, inspect
@@ -11,22 +11,28 @@ import logging, inspect
 
 class Attractor:
 
-    def __init__(self, r, radius, mu=None, mass=None, soi=None):
+    def __init__(self, name, r, radius, mu=None, mass=None, soi=0):
         self.mass = mass
         self.soi =  soi
+        self.name = name
         self.parent = None
         self.child = []
         self.r = r
+        self.v = Vector(0,0,0)
 
         self.mu = mu
         self.radius = radius
         self.atmosphere_limit = 0
         self.orbit = None
+        self.picture = None
 
-    def set_orbit_parameters(self,a, e , i, raan, arg_pe, f):
-        self.orbit = Orbit(self.mu)
+    def set_orbit_parameters(self,mu, a, e , i, raan, arg_pe, f):
+        self.orbit = Orbit(mu)
         self.orbit.set_elements(a, e, i , raan, arg_pe, f)
+        (self.r,self.v) = self.orbit.update_position(0)
         
+    def set_picture(self,picture):
+        self.picture = picture
 
     def set_atmosphere_condition(self, p0, h0, atmosphere_limit):
         self.p0 = p0
@@ -47,10 +53,11 @@ class Attractor:
 
     def get_density(self, h):
         if self.atmosphere_limit !=None and h<self.atmosphere_limit:
-            return self.p0 * math.exp(-h/self.h0)
+            return self.p0 * exp(-h/self.h0)
         return 0
 
     def add_child(self,child):
+        child.parent = self
         self.child.append(child)
 
     def get_drag_force(self,h, v, drag_x_surf):
@@ -72,8 +79,41 @@ class Attractor:
 
         return F
 
+    def get_gravitationnal_field(self,r):
+        ra = (r.x**2+r.y**2)**0.5
+        angle = atan2(r.y, r.x)
+        g = Vector(-cos(angle)*self.mu/ra**2,-sin(angle)*self.mu/ra**2,0)
+        return g
+
     def update_position(self,t):
         (self.r,self.v) = self.orbit.update_position(t)
+
+
+    def check_boundaries(self,r):
+
+        dist = r.norm()
+        if dist>self.soi and self.soi>0:
+            print("Parent")
+            return self.parent
+        for att in self.child:
+            dist = (att.r-r).norm()
+            if att.soi>0 and dist<att.soi:
+                return att
+        
+        return None
+
+    def change_attractor(self, r, v, new, old):
+        
+        #print(r,v)
+        if (new == old.parent):
+            print("change attractor to Parent")
+            r += old.r
+            v += old.v
+        else:
+            print("change attractor to child")
+            r -= new.r
+            v -= new.v
+        return (r,v)
 
 
         

@@ -18,7 +18,6 @@ class TimeController():
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("TimeSeed %i" % self.t_increment)
         logging.debug("----------------------------")
-        print(self.t_increment)
 
     def time_normalize(self):
 
@@ -62,5 +61,6 @@ class TimeController():
         self.event_listener.add_key_event(120,self.time_accelerate,"Accelerate time")
         self.event_listener.add_key_event(119,self.time_decelarate,"Deccelerate time")
         self.event_listener.add_key_event(99,self.time_normalize,"Real time")
+        self.time_slow = []
 
 

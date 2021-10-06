@@ -68,3 +68,4 @@ neptune_radius_polar = 24341 * _kilo
 earth_sidereal_day = _timedelta(hours=23, minutes=56, seconds=4.1).total_seconds()
 
 max_delta_t = 0.1
+

@@ -2,7 +2,7 @@
 # Define rockets (composition, )
 ########################################
 from vector import Vector
-from math import atan2, cos, sin, log
+from math import atan2, cos, pi, sin, log, acos, asin
 import numpy as np
 from orbit import Orbit
 import logging, inspect
@@ -118,26 +118,22 @@ class Orbiter:
         self.attractor = None
         self.orientation1 = np.pi/2
         self.orientation2 = 0
-        self.last_E = 0
         self.dv = Vector(0.0,0.0,0.0)
         self.stages = stages
         self.thrust = False
         self.last_a = Vector(0,0,0)
-        self.M0 = 0
 
     def set_state(self,r,v,t):
         self.r = r
         self.v = v
-        self.t0 = t
         if (self.r.norm()-self.attractor.radius>1000):
-            self.orbit.set_from_state_vector(r,v)
-            E = self.orbit.get_eccentric_from_true_anomaly()
-            self.M0 = self.orbit.get_m0(E)
+            self.orbit.set_from_state_vector(r,v,t)            
             
 
     def set_attractor(self, attractor):
         self.attractor = attractor
         self.orbit = Orbit(attractor.mu)
+        self.orbit.set_attractor(attractor)
 
     def change_orientation(self, o1, o2):
         self.orientation1 = o1
@@ -148,11 +144,23 @@ class Orbiter:
         angle = atan2(self.r.y,self.r.x)
         return Vector(ra*cos(angle), ra*sin(angle),0)
 
+    def check_boundaries(self,time_controller):
+        new_attractor = self.attractor.check_boundaries(self.r)
+        if new_attractor!=None:
+            (r,v) = self.attractor.change_attractor(self.r,self.v, new_attractor, self.attractor)
+            self.set_attractor( new_attractor)
+            self.set_state(r,v,time_controller.t)
+            self.orbit.calculate_time_series()
+            time_controller.time_normalize()
+
+
+
+
 
     # Apply forces and update vector v and r
-    def update_position(self, t,dt):
+    def update_position(self, time_controller,dt):
         trajectory_update = False
-
+        t = time_controller.t
         # if delta t > max_delta_t (from constants), divide delta_t to avoid too big time increment
         # Otherwise, with delta t too high, force will be inconsistant 
         delta_t_array = []
@@ -176,9 +184,7 @@ class Orbiter:
             # If rocket is in flight
             if (self.r.norm() > self.attractor.radius):
                 # Calculate gravitationnal force
-                ra = (self.r.x**2+self.r.y**2)**0.5
-                angle = atan2(self.r.y,self.r.x)
-                a = Vector(-cos(angle)*self.attractor.mu/ra**2,-sin(angle)*self.attractor.mu/ra**2,0)
+                a = self.attractor.get_gravitationnal_field(self.r)
             else:
                 a = Vector(0,0,0)
 
@@ -211,44 +217,33 @@ class Orbiter:
         if trajectory_update and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
             self.orbit.calculate_time_series()
-        
+            (perihelion, aphelion) = self.orbit.get_limit()
+            n = (self.orbit.mu/(self.orbit.a**3))**0.5
+
+
+
+        self.check_boundaries(time_controller)
+
+
         # Detect rocket crash
         if (self.r.norm() < self.attractor.radius):
             return True
-            #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
         return False
+
+
+    
+        
 
 
     # Propagate kepler equation to calculate Velocity and position
     # Use for time acceleration
-    def update_position_delta_t(self, t):
-        dt = t-self.t0
-        if self.orbit.a !=0:
-            
-            M = self.M0 + (dt)*(self.attractor.mu/(abs(self.orbit.a)**3))**0.5
-            try:  
-                E = self.orbit.get_eccentricity_from_mean(M)
-                self.last_E = E
-            except:
-                E = self.last_E
-
-            self.M0 = M
-            self.t0 = t
-
-            (r,v) = self.orbit.get_state(E)
-            self.r = self.orbit.get_eci(r)
-            self.v = self.orbit.get_eci(v)
-
-            logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
-            logging.debug("dt %i" % dt)
-            logging.debug("E %r" % E)
-            logging.debug("r %s" % str(self.r))
-            logging.debug("v %s" % str(self.v))
-            logging.debug("----------------------------")
+    def update_position_delta_t(self, time_controller):
+        (self.r,self.v) = self.orbit.update_position(time_controller.t)
+        self.check_boundaries(time_controller)
+        
 
         if (self.r.norm() < self.attractor.radius):
             return True
-            #self.M0 = mathutils.get_m0(self.orbit.f,self.orbit.e)
         return False
         
 
@@ -326,7 +321,6 @@ class Orbiters:
         new_orbiter.set_state(orbiter.r,orbiter.v,self.time.t)
         new_orbiter.orbit.calculate_time_series()
         orbiter.thrust = 1
-        print(self.orbiters.keys())
         print("############# Stage Separation ##############")
         print(part)
         print("#############################################")
