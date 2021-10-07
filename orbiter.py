@@ -217,8 +217,8 @@ class Orbiter:
         if trajectory_update and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
             self.orbit.calculate_time_series()
-            (perihelion, aphelion) = self.orbit.get_limit()
-            n = (self.orbit.mu/(self.orbit.a**3))**0.5
+            #(perihelion, aphelion) = self.orbit.get_limit()
+            #n = (self.orbit.mu/(self.orbit.a**3))**0.5
 
 
 

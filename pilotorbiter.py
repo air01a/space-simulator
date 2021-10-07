@@ -1,7 +1,6 @@
 ########################################
 # Use keyboard to orient rocket
 ########################################
-import pygame
 from numpy import pi
 
 class PilotOrbiter:
@@ -30,20 +29,21 @@ class PilotOrbiter:
         print(orbiter.r, orbiter.v)
 
     def quit(self):
-        new_event = pygame.event.Event(pygame.QUIT, unicode='a', key=ord('a'))
-        pygame.event.post(new_event)
+        #new_event = pygame.event.Event(pygame.QUIT, unicode='a', key=ord('a'))
+        #pygame.event.post(new_event)
+        print("quit")
 
     def __init__(self, orbiters, event_listener):
         self.event_listener = event_listener
         self.orbiters = orbiters
         self.thrust = False
-        self.event_listener.add_key_event(pygame.K_UP,self.engine_on,"Start Engine")
-        self.event_listener.add_key_event(pygame.K_DOWN,self.engine_off,"Stop Engine")
-        self.event_listener.add_key_event(pygame.K_RIGHT,self.turn_right,"Change Ship orientation (to the right)")
-        self.event_listener.add_key_event(pygame.K_LEFT,self.turn_left,"Change Ship orientation (to the left)")
-        self.event_listener.add_key_event(pygame.K_z,self.display_param,"Print Kepler parameters")
-        self.event_listener.add_key_event(pygame.K_SPACE,self.drop_payload,"Drop payload")
+        self.event_listener.add_key_event(273,self.engine_on,"Start Engine")
+        self.event_listener.add_key_event(274,self.engine_off,"Stop Engine")
+        self.event_listener.add_key_event(275,self.turn_right,"Change Ship orientation (to the right)")
+        self.event_listener.add_key_event(276,self.turn_left,"Change Ship orientation (to the left)")
+        self.event_listener.add_key_event(122,self.display_param,"Print Kepler parameters")
+        #self.event_listener.add_key_event(32,self.drop_payload,"Drop payload")
 
-        self.event_listener.add_key_event(pygame.K_ESCAPE,self.quit,"Quit simulation")
+        #self.event_listener.add_key_event(pygame.K_ESCAPE,self.quit,"Quit simulation")
 
 

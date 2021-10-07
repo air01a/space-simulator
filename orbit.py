@@ -402,7 +402,6 @@ class Orbit:
     # Use for time acceleration
     def update_position(self, t):
         if self.a !=0:
-            
             M = self.get_mean_from_t(t)
             try:  
                 E = self.get_eccentricity_from_mean(M)
@@ -423,3 +422,4 @@ class Orbit:
             logging.debug("v %s" % str(v))
             logging.debug("----------------------------")
             return (r,v)
+        return (0,0)
