@@ -1,9 +1,10 @@
-from math import e
+# THE UGLY part 
+
+from math import e,pi, degrees, atan2
 from kivy.graphics import *
 from kivy.uix.widget import Widget
 from kivy.core.image import Image as CoreImage
 from kivy.core.window import Window
-
 import numpy as np
 from vector import Vector
 
@@ -21,6 +22,44 @@ class WindowsViewer:
         self.center = (0,0)
         self.size = 100000
 
+class Compas(Widget):
+    def __init__(self,spacetime):
+        self.orbiters = spacetime.orbiters
+        self.angle = 180
+        super(Compas, self).__init__()
+
+    def on_touch_down(self, touch):
+        y = (touch.y - self.center[1])
+        x = (touch.x - self.center[0])
+        calc = degrees(atan2(y, x))
+        self.prev_angle = calc if calc > 0 else 360+calc
+        self.tmp = self.angle
+
+    def on_touch_move(self, touch):
+        y = (touch.y - self.center[1])
+        x = (touch.x - self.center[0])
+        calc = 10*degrees(atan2(y, x))
+        new_angle = calc if calc > 0 else 360+calc
+
+        self.angle = (self.tmp - (new_angle-self.prev_angle))%360
+        self.orbiters.get_current_orbiter().orientation1=(self.angle*2*pi/180+pi/2)%(2*pi)
+        self.draw()
+
+    def on_touch_up(self, touch):
+        #Animation(angle=0).start(self)
+        self.draw()
+
+    def draw(self):
+        with self.canvas:
+            PushMatrix()
+            Rotate(origin=(120,Window.height-60), angle=-self.angle-90)
+
+            Rectangle(source='images/compas.png',pos=(60,Window.height-120),size=(120,120))
+            PopMatrix()
+        
+
+
+
 
 class DrawTrajectory(Widget):
 
@@ -34,8 +73,10 @@ class DrawTrajectory(Widget):
         self.canvas.clear()
         color_elipse = (200,200,200)
         color_lines  = (218,238,241)
+
         if len(cartesien_orbit)<2:
             return
+            
         max = cartesien_orbit[-1]
         (min_x, min_y, min_z) =  cartesien_orbit[-2]
         if orbit.e<1 and len(cartesien_orbit)>3:
@@ -49,7 +90,6 @@ class DrawTrajectory(Widget):
             with self.canvas:
                 Color(color_elipse)
                 Line(points=[xc,yc,x2,y2])
-            
 
             (x2,y2) = (x,y)
         with self.canvas:
@@ -61,6 +101,10 @@ class DrawTrajectory(Widget):
                 (max_x,max_y) = dis.center_orbit(max_x,max_y, True, earth_x,earth_y)
                 Line(points=[max_x,max_y, earth_x,earth_y])
     
+    def draw_velocity(self, x,y,x2,y2):
+        with self.canvas:
+            Color(0,0.5,0)
+            Line(points=[x,y,x2,y2],width=4)
 
     def draw_ship(self, orbiter_x,orbiter_y,orientation):
 
@@ -82,21 +126,27 @@ class DrawTrajectory(Widget):
  
 class Graphics(Widget):
 
-    def __init__(self, orbiters,event_listener, zoom_ratio=1):
+    def __init__(self, world, zoom_ratio=1):
         super(Graphics, self).__init__()
-        self.orbiters = orbiters
-
+        self.orbiters = world.orbiters
         with self.canvas:
-            
-            
+            self.background = Rectangle(source = "images/galaxy.jpeg", size=Window.size,pos=self.pos)
             Color(0,   0, 255)
             self.earth_atmosphere  = Ellipse()
             Color(1,1, 1, 1)
 
+            self.draw_trajectory = DrawTrajectory()
+            self.add_widget(self.draw_trajectory)
+            Color(1,1, 1, 1)
+
+            self.compas = Compas(world)
+            self.compas.draw()
+
+            self.add_widget(self.compas)
             self.earth_main_sprite = Rectangle(source = "images/earth.png")
             self.moon_main_sprite  = Rectangle(source = "images/moon.png")
 
-        self.size = self.width, self.height = Window.size
+        self.width, self.height = Window.size
         self.zoom_ratio = zoom_ratio+0.0
         self.earth_diameter = zoom_ratio*DEFAULT_EARTH_SIZE/2
 
@@ -105,17 +155,11 @@ class Graphics(Widget):
         self.orbit_factor = DEFAULT_EARTH_SIZE/(2*6378140)
         self.x_center  = self.width/2-self.earth_diameter 
         self.y_center  = self.height/2-self.earth_diameter 
-
-        self.draw_trajectory = DrawTrajectory()
-        self.add_widget(self.draw_trajectory)
-
-
-        self.bind(pos=self.update)
-        self.bind(size=self.update)
-        event_listener.add_key_event(112, self.change_center,"Change screen center (earth vs ship)")
+        world.event_listener.add_key_event(112, self.change_center,"Change screen center (earth vs ship)")
         
-        event_listener.add_key_event(97, self.zoom_out, "Zoom out")
-        event_listener.add_key_event(113, self.zoom_in, "Zoom in")    
+        world.event_listener.add_key_event(97, self.zoom_out, "Zoom out")
+        world.event_listener.add_key_event(113, self.zoom_in, "Zoom in")
+        self.world=world
     
     def zoom_out(self):
         self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1
@@ -124,8 +168,8 @@ class Graphics(Widget):
         
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
-        self.x_center = (self.width-self.earth_diameter)/2
-        self.y_center = (self.height-self.earth_diameter)/2
+        self.x_center = (self.width/2-self.earth_diameter)
+        self.y_center = (self.height/2-self.earth_diameter)
 
     def zoom_in(self):
         self.zoom_ratio = self.zoom_ratio-1.0 if self.zoom_ratio>1 else self.zoom_ratio*0.9
@@ -133,8 +177,8 @@ class Graphics(Widget):
         size = max(20, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
         
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
-        self.x_center = (self.width-self.earth_diameter)/2
-        self.y_center = (self.height-self.earth_diameter)/2
+        self.x_center = (self.width/2-self.earth_diameter)
+        self.y_center = (self.height/2-self.earth_diameter)
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
     def change_center(self):
@@ -142,7 +186,13 @@ class Graphics(Widget):
 
 
     def update(self, *args):
-        self.size = self.width, self.height = Window.size
+        (size_hint_x,size_hint_y) = self.size_hint
+        self.width, self.height = self.size
+        print(self.width, self.height)
+        self.width*=size_hint_x
+        self.height *= size_hint_y
+        print(self.width, self.height)
+
         self.x_center  = self.width/2-self.earth_diameter 
         self.y_center  = self.height/2-self.earth_diameter 
 
@@ -160,8 +210,9 @@ class Graphics(Widget):
     
 
 
-    def draw(self):
-        orbiters = self.orbiters
+    def draw(self,dt):
+        #self.update()
+        orbiters = self.world.orbiters
         orbiter = orbiters.get_current_orbiter()
         if orbiter == None:
             return
@@ -218,11 +269,12 @@ class Graphics(Widget):
             self.moon_main_sprite.pos = int(moon_x)-display_size/2,int(moon_y)-display_size/2
             self.moon_main_sprite.size = (display_size,display_size)
 
-            self.earth.x = earth_x - self.earth_diameter/2
-            self.earth.y = earth_y - self.earth_diameter/2
+            self.earth.x = earth_x - self.earth_diameter
+            self.earth.y = earth_y - self.earth_diameter
 
             self.earth_main_sprite.pos   = (self.earth.x,self.earth.y)
-            self.earth_main_sprite.size  = (self.earth_diameter,self.earth_diameter)
+            self.earth_main_sprite.size  = (self.earth_diameter*2,self.earth_diameter*2)
+            self.draw_trajectory.draw_velocity(orbiter_x,orbiter_y,orbiter_x+orbiter.v.x/125,orbiter_y+orbiter.v.y/125)
 
             self.draw_trajectory.draw_ship(orbiter_x,orbiter_y,orbiter.orientation1)
 

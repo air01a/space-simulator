@@ -14,6 +14,7 @@ from vector import Vector
 class Controller:
     def showControl(self):
         alt = None
+        last_t = -1
         print("time;thrust;altitude;velocity;carburant;(perihelion,aphelion)")
         if len(self.attitude_control)>0:
             (param,alt,control,throttle) = self.attitude_control.pop(0)
@@ -36,7 +37,8 @@ class Controller:
                     (param == 'aphelion'    and apogee   > alt) or
                     (param == 'velocity'    and velocity   > alt) or
                     (param == 'time'        and self.time.t > alt)):
-
+                    if self.control_info:
+                        self.control_info.text = "+++ Attitude Control Angle %i +++" % int(control)
                     print("+++++++++++++++++++++++++")
                     print("+++ Attitude Control +++")
                     print("Angle %i" % int(control))
@@ -51,22 +53,39 @@ class Controller:
                         alt = None
 
             
-            print("%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(self.time.t),orbiter.thrust,altitude, velocity,int(orbiter.stages.get_carburant_mass()),int(orbiter.orientation1*180/3.141592),perigee,apogee))
+            #print("%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(self.time.t),orbiter.thrust,altitude, velocity,int(orbiter.stages.get_carburant_mass()),int(orbiter.orientation1*180/3.141592),perigee,apogee))
             if len(orbiter.stages.empty_part)>0 and (len(orbiter.stages.stages)>1):
                 while len(orbiter.stages.empty_part)>0:
                     part_name = orbiter.stages.empty_part.pop(0)
                     self.orbiters.separate_stage(orbiter,part_name)
                     print("--------------------------------\n----  Separating %s"%part_name)
-
+                    if self.control_info:
+                        self.control_info.text = "----  Separating %s"%part_name
+            last_t = self.time.t
             if self.time.t_increment==0:
                 time.sleep(1)
             else:
                 time.sleep(0.1)
+            if self.time.t == last_t:
+                self.finish = True
 
-    def __init__(self, flight_path, orbiters, timecontroller):
+    def get_info(self):
+        orbiter = self.orbiters.get_current_orbiter()
+        altitude = (orbiter.r.norm() - orbiter.attractor.radius)/1000
+        (perigee,apogee) = orbiter.orbit.get_limit()
+        perigee = int((perigee-orbiter.attractor.radius)/1000)
+        apogee = int((apogee - orbiter.attractor.radius)/1000)
+        perigee = max(0,perigee)
+        apogee = max(0,apogee)
+        velocity = orbiter.v.norm()/1000
+        info =  "%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(self.time.t),orbiter.thrust,altitude, velocity,int(orbiter.stages.get_carburant_mass()),int(orbiter.orientation1*180/3.141592),perigee,apogee)
+        return info
+
+    def __init__(self, flight_path, orbiters, timecontroller,control_info = None):
         self.orbiters = orbiters
         self.time = timecontroller
         self.finish = False
+        self.control_info = control_info
         with open(flight_path) as json_file:
             data = json.load(json_file)
             self.attitude_control = data['flight_path']
@@ -84,3 +103,8 @@ class Controller:
 
     def stop(self):
         self.finish = True
+
+
+    def __del__(self):
+        print("desturcteur")
+        self.stop()

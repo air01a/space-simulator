@@ -30,11 +30,12 @@ class EventListener(Widget):
          #       return Trues
             
          #   if event.type == pygame.KEYDOWN:
-        print('The key', keycode, 'have been pressed')
-        print(' - text is %r' % text)
-        print(' - modifiers are %r' % modifiers)
+       
+        #print('The key', keycode, 'have been pressed')
+        #print(' - text is %r' % text)
+        #print(' - modifiers are %r' % modifiers)
         key = keycode[0]
-        print(key)
+        #print(key)
         if key in self.key_event.keys():
             self.key_event[key]()
         

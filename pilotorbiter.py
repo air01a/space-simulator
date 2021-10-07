@@ -42,7 +42,7 @@ class PilotOrbiter:
         self.event_listener.add_key_event(275,self.turn_right,"Change Ship orientation (to the right)")
         self.event_listener.add_key_event(276,self.turn_left,"Change Ship orientation (to the left)")
         self.event_listener.add_key_event(122,self.display_param,"Print Kepler parameters")
-        #self.event_listener.add_key_event(32,self.drop_payload,"Drop payload")
+        self.event_listener.add_key_event(32,self.drop_payload,"Drop payload")
 
         #self.event_listener.add_key_event(pygame.K_ESCAPE,self.quit,"Quit simulation")
 
