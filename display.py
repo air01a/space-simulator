@@ -6,6 +6,9 @@ from kivy.uix.widget import Widget
 from kivy.core.image import Image as CoreImage
 from kivy.core.window import Window
 import numpy as np
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+
 from vector import Vector
 
 DEFAULT_EARTH_SIZE = 111
@@ -17,48 +20,55 @@ ORANGE =      (255, 165,   0)
 DEFAULT_EARTH_SIZE = 111
 GRAY  =       (105, 105, 105, 0.1)
 
-class WindowsViewer:
-    def __init__(self):
-        self.center = (0,0)
-        self.size = 100000
 
-class Compas(Widget):
-    def __init__(self,spacetime):
+
+class Compas(Button):
+    def __init__(self,**kwargs):
+        super(Compas, self).__init__(**kwargs)
+
+        #self.orbiters = spacetime.orbiters
+        self.angle = 180
+        
+    def set_param(self,spacetime):
         self.orbiters = spacetime.orbiters
         self.angle = 180
-        super(Compas, self).__init__()
+
+
 
     def on_touch_down(self, touch):
-        y = (touch.y - self.center[1])
-        x = (touch.x - self.center[0])
-        calc = degrees(atan2(y, x))
-        self.prev_angle = calc if calc > 0 else 360+calc
-        self.tmp = self.angle
+        #self.size=(200,200)
+        if self.collide_point(*touch.pos):
+            y = (touch.y - self.center[1])
+            x = (touch.x - self.center[0])
+            calc = degrees(atan2(y, x))
+            self.prev_angle = calc if calc > 0 else 360+calc
+            self.tmp = self.angle
 
     def on_touch_move(self, touch):
-        y = (touch.y - self.center[1])
-        x = (touch.x - self.center[0])
-        calc = 10*degrees(atan2(y, x))
-        new_angle = calc if calc > 0 else 360+calc
+        if self.collide_point(*touch.pos):
+            y = (touch.y - self.center[1])
+            x = (touch.x - self.center[0])
+            calc = 10*degrees(atan2(y, x))
+            new_angle = calc if calc > 0 else 360+calc
 
-        self.angle = (self.tmp - (new_angle-self.prev_angle))%360
-        self.orbiters.get_current_orbiter().orientation1=(self.angle*2*pi/180+pi/2)%(2*pi)
-        self.draw()
+            self.angle = (self.tmp - (new_angle-self.prev_angle))%360
+            print(self.angle)
+            #self.orbiters.get_current_orbiter().orientation1=(self.angle*2*pi/180+pi/2)%(2*pi)
+            self.draw()
 
     def on_touch_up(self, touch):
         #Animation(angle=0).start(self)
         self.draw()
 
     def draw(self):
-        with self.canvas:
+        with self.canvas.before:
             PushMatrix()
             Rotate(origin=(120,Window.height-60), angle=-self.angle-90)
-
-            Rectangle(source='images/compas.png',pos=(60,Window.height-120),size=(120,120))
             PopMatrix()
-        
 
-
+    def repos(self):
+        self.canvas.clear()
+        self.draw()    
 
 
 class DrawTrajectory(Widget):
@@ -124,13 +134,12 @@ class DrawTrajectory(Widget):
                 Ellipse(size=(5,5)).pos = (orbiter_x-2.5,orbiter_y-2.5)
 
  
-class Graphics(Widget):
+class Graphics(BoxLayout):
 
-    def __init__(self, world, zoom_ratio=1):
-        super(Graphics, self).__init__()
+    def init(self, world, zoom_ratio=1):
         self.orbiters = world.orbiters
         with self.canvas:
-            self.background = Rectangle(source = "images/galaxy.jpeg", size=Window.size,pos=self.pos)
+            #self.background = Rectangle(source = "images/galaxy.jpeg", size=Window.size,pos=self.pos)
             Color(0,   0, 255)
             self.earth_atmosphere  = Ellipse()
             Color(1,1, 1, 1)
@@ -139,10 +148,10 @@ class Graphics(Widget):
             self.add_widget(self.draw_trajectory)
             Color(1,1, 1, 1)
 
-            self.compas = Compas(world)
-            self.compas.draw()
+            #self.compas = Compas(world)
+            #self.compas.draw()
 
-            self.add_widget(self.compas)
+            #self.add_widget(self.compas)
             self.earth_main_sprite = Rectangle(source = "images/earth.png")
             self.moon_main_sprite  = Rectangle(source = "images/moon.png")
 
@@ -186,15 +195,13 @@ class Graphics(Widget):
 
 
     def update(self, *args):
-        (size_hint_x,size_hint_y) = self.size_hint
-        self.width, self.height = self.size
-        print(self.width, self.height)
-        self.width*=size_hint_x
-        self.height *= size_hint_y
-        print(self.width, self.height)
+        self.width, self.height = Window.size
+        self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
         self.x_center  = self.width/2-self.earth_diameter 
         self.y_center  = self.height/2-self.earth_diameter 
+        self.background.size = Window.size
+        self.compas.repos()
 
 
     def center_orbit(self, x, y, force_earth_center=False,xearth=0,yearth=0):
@@ -206,9 +213,6 @@ class Graphics(Widget):
             y = (y*self.orbit_factor*self.zoom_ratio + yearth)
 
         return (x,y)
-
-    
-
 
     def draw(self,dt):
         #self.update()

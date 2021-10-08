@@ -4,57 +4,56 @@ from kivy.clock import Clock
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.graphics import Color, Rectangle
+from kivy.core.window import Window
 
 
-from display import Graphics
+
+
+from display import Graphics, Compas
 from spacetime import SpaceTime
 
-class InfoLabel(Label):
-    def on_size(self, *args):
-        self.canvas.before.clear()
-        with self.canvas.before:
-            Color(0, 1, 0, 0.25)
-            Rectangle(pos=self.pos, size=self.size)
 
-class ControlInfoLabel(Label):
-    def on_size(self, *args):
-        self.canvas.before.clear()
-        with self.canvas.before:
-            Color(0, 0, 1, 0.25)
-            Rectangle(pos=self.pos, size=self.size)
+class MainWindow(BoxLayout):
 
-class SpaceSimulatorApp(App):
-    def build(self):
-        self.control_label = ControlInfoLabel(text='',size_hint=(0.5,.1))
+    def __init__(self, **kwargs):
+        super(MainWindow, self).__init__(**kwargs)
 
-        layout = BoxLayout(orientation='vertical')
-        self.space_time = SpaceTime(self.control_label)
+    def run(self):
+        self.space_time = SpaceTime()
+
+        self.space_time.controller.control_info_callback = self.show_info_control
+        self.space_time.pilot.control_info_callback = self.show_info_control
         zoom_ratio = 50
-
-        self.display = Graphics(self.space_time, zoom_ratio)
-
-        #self.window_manager =  SpaceSimulator(self.space_time)
-        self.display.size_hint=(1,.8)
-        layout.add_widget(self.display)
-        layout.add_widget(self.control_label)
-        self.label = InfoLabel(text='Hello',size_hint=(1, .1))
-        layout.add_widget(self.label)
+        self.graphics = self.ids.graphics
+        self.graphics.init(self.space_time, zoom_ratio)
         
         event = Clock.schedule_interval(self.space_time.update, 1 / 60.)
-        display = Clock.schedule_interval(self.display.draw, 1 / 24.)
+        display = Clock.schedule_interval(self.graphics.draw, 1 / 24.)
         info = Clock.schedule_interval(self.show_info, 1 / 10.)
-
-
-        return layout
+        Window.bind(size=self.resize)
 
     def show_info(self,ft):
-                self.label.text = self.space_time.controller.get_info()
+        self.ids.infoLabel.text = self.space_time.controller.get_info()
+
+    def show_info_control(self,text):
+        self.ids.controlInfoLabel.text = text
 
     def on_request_close(self, *args):
         self.space_time.controller.stop()
 
-    def __del__(self):
-        self.space_time.controller.stop()
+
+
+    def resize(self, pos, size):
+        self.graphics.update()
+    
+
+class SpaceSimulatorApp(App):
+    def build(self):
+        main = MainWindow()
+        main.run()
+        return main
+
+
 
 
 if __name__ == '__main__':

@@ -8,9 +8,14 @@ class PilotOrbiter:
     def engine_on(self):
         self.orbiters.get_current_orbiter().stages.set_thrust("ALL",1)
         self.orbiters.get_current_orbiter().thrust = True
+        if self.control_info_callback:
+            self.control_info_callback("+++ Engine started +++")
     
     def engine_off(self):
         self.orbiters.get_current_orbiter().thrust = False
+        if self.control_info_callback:
+            self.control_info_callback("+++ Engine stopped +++")
+
     
     def turn_right(self):
 
@@ -22,6 +27,8 @@ class PilotOrbiter:
     def drop_payload(self):
         self.orbiters.separate_stage(self.orbiters.get_current_orbiter(),"payload")
         print("-------------------\nDropping Payload")
+        if self.control_info_callback:
+            self.control_info_callback("--------Dropping Payload")
 
     def display_param(self):
         orbiter = self.orbiters.get_current_orbiter()
@@ -37,6 +44,7 @@ class PilotOrbiter:
         self.event_listener = event_listener
         self.orbiters = orbiters
         self.thrust = False
+        self.control_info_callback = None
         self.event_listener.add_key_event(273,self.engine_on,"Start Engine")
         self.event_listener.add_key_event(274,self.engine_off,"Stop Engine")
         self.event_listener.add_key_event(275,self.turn_right,"Change Ship orientation (to the right)")

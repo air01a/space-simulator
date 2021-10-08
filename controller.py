@@ -37,8 +37,8 @@ class Controller:
                     (param == 'aphelion'    and apogee   > alt) or
                     (param == 'velocity'    and velocity   > alt) or
                     (param == 'time'        and self.time.t > alt)):
-                    if self.control_info:
-                        self.control_info.text = "+++ Attitude Control Angle %i +++" % int(control)
+                    if self.control_info_callback:
+                        self.control_info_callback("+++ Attitude Control Angle %i +++" % int(control))
                     print("+++++++++++++++++++++++++")
                     print("+++ Attitude Control +++")
                     print("Angle %i" % int(control))
@@ -59,8 +59,8 @@ class Controller:
                     part_name = orbiter.stages.empty_part.pop(0)
                     self.orbiters.separate_stage(orbiter,part_name)
                     print("--------------------------------\n----  Separating %s"%part_name)
-                    if self.control_info:
-                        self.control_info.text = "----  Separating %s"%part_name
+                    if self.control_info_callback:
+                        self.control_info_callback( "----  Separating %s"%part_name)
             last_t = self.time.t
             if self.time.t_increment==0:
                 time.sleep(1)
@@ -81,11 +81,13 @@ class Controller:
         info =  "%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(self.time.t),orbiter.thrust,altitude, velocity,int(orbiter.stages.get_carburant_mass()),int(orbiter.orientation1*180/3.141592),perigee,apogee)
         return info
 
+    
+
     def __init__(self, flight_path, orbiters, timecontroller,control_info = None):
         self.orbiters = orbiters
         self.time = timecontroller
         self.finish = False
-        self.control_info = control_info
+        self.control_info_callback = control_info
         with open(flight_path) as json_file:
             data = json.load(json_file)
             self.attitude_control = data['flight_path']
