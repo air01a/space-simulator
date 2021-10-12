@@ -8,7 +8,7 @@ from orbit import Orbit
 import logging, inspect
 from constants import max_delta_t
 import configparser
-
+from orbitprojection import OrbitProjection
 
 ########################################
 # Define a composant of a stage
@@ -68,9 +68,10 @@ class Stages:
         if len(self.stages[stage])==0:
             del self.stages[stage]
             if stage==0:
-                for part in self.stages[stage].values():
-                    self.total_empty_mass -= part.carburant_mass
-                    self.carburant_mass += part.carburant_mass
+                if len(self.stages[stage])>0:
+                    for part in self.stages[stage].values():
+                        self.total_empty_mass -= part.carburant_mass
+                        self.carburant_mass += part.carburant_mass
         return part
 
     def sep_payload(self):
@@ -122,6 +123,7 @@ class Orbiter:
         self.stages = stages
         self.thrust = False
         self.last_a = Vector(0,0,0)
+        self.orbit_projection = OrbitProjection(self.attractor, self.orbit)
 
     def set_state(self,r,v,t):
         self.r = r
@@ -134,6 +136,8 @@ class Orbiter:
         self.attractor = attractor
         self.orbit = Orbit(attractor.mu)
         self.orbit.set_attractor(attractor)
+        self.orbit_projection.attractor = attractor
+        self.orbit_projection.orbit = self.orbit
 
     def change_orientation(self, o1, o2):
         self.orientation1 = o1
@@ -150,7 +154,8 @@ class Orbiter:
             (r,v) = self.attractor.change_attractor(self.r,self.v, new_attractor, self.attractor)
             self.set_attractor( new_attractor)
             self.set_state(r,v,time_controller.t)
-            self.orbit.calculate_time_series()
+        
+            self.orbit_projection.calculate_time_series()
             time_controller.time_normalize()
 
 
@@ -216,7 +221,7 @@ class Orbiter:
         # If the trajectory has changed, update the kepler projection
         if trajectory_update and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
-            self.orbit.calculate_time_series()
+            self.orbit_projection.calculate_time_series()
             #(perihelion, aphelion) = self.orbit.get_limit()
             #n = (self.orbit.mu/(self.orbit.a**3))**0.5
 
@@ -282,7 +287,14 @@ class Orbiters:
         if self.current_orbiter==None:
             return None
         return self.orbiters[self.current_orbiter]
+
+    def get_current_orbiter_name(self):
+        return self.current_orbiter
     
+    def get_current_orbiter_names(self):
+        print(self.orbiters.keys())
+        return list(self.orbiters.keys())
+
     def get_orbiter(self, name):
         return self.orbiters[name]
 
@@ -319,7 +331,7 @@ class Orbiters:
         new_orbiter.set_attractor(orbiter.attractor)
         self.add_orbiter(part_name,new_orbiter)
         new_orbiter.set_state(orbiter.r,orbiter.v,self.time.t)
-        new_orbiter.orbit.calculate_time_series()
+        new_orbiter.orbit_projection.calculate_time_series()
         orbiter.thrust = 1
         print("############# Stage Separation ##############")
         print(part)

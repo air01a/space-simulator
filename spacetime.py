@@ -18,18 +18,17 @@ class SpaceTime:
         logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
         self.event_listener = EventListener()
         
+ 
         earth = Attractor("Earth",Vector(0,0,0),6378140.0,constants.earth_mu)
         earth.set_atmosphere_condition(1.39,7900,120000)
         earth.set_picture("images/earth.png")
-
-        earth = Attractor("Earth",Vector(0,0,0),6378140.0,constants.earth_mu)
-        earth.set_atmosphere_condition(1.39,7900,120000)
-        earth.set_picture("images/earth.png")
+        earth.set_soir(925000000)
+        #earth.set_soir(384000*1000 - 66100000)
 
         moon = Attractor("Moon",Vector(384000*1000,0,0),1737400,constants.moon_mu)
         moon.set_picture("images/moon.png")
         moon.set_soir(66100000)
-        moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,2.9*pi/3)
+        moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,2.4*pi/3)
 
         moon.update_position(0)
         earth.add_child(moon)
@@ -47,12 +46,17 @@ class SpaceTime:
         self.controller = Controller('missions/ariane5/geo.orbit',self.orbiters, self.time_controller, control_info)
 
 
-        #orbiter.r = Vector( -6524563.104025579, 3706639.4519880684, -4.5163113759516555e-10 )
-        #orbiter.v = Vector( 2693.983421383506, 9844.606589058822, -1.1739868065716526e-12 )
-        orbiter.r = Vector( 0, earth.radius, 0 )
-        orbiter.v = Vector( 0, 0, 0 )
+        orbiter.r = Vector( -6524563.104025579, 3706639.4519880684, -4.5163113759516555e-10 )
+        orbiter.v = Vector( 2693.983421383506, 9844.606589058822, -1.1739868065716526e-12 )
+        #orbiter.r = Vector( 0, earth.radius, 0 )
+        #orbiter.v = Vector( 0, 0, 0 )
+        #orbiter.r = Vector( -6490850.607718132, 3828728.176957996, -4.661190726332874e-10)
+        #orbiter.v = Vector( 2769.2699383839617, 9958.979418659352, -1.1739868065716526e-12)
+
+        #orbiter.r = Vector( -6305069.872293199, 4544958.402749465, -5.548446001105239e-10)
+        #orbiter.v = Vector(1989.0579153083816, 9224.919681644054, -1.1739868065716526e-12)
         orbiter.set_state(orbiter.r,orbiter.v,0)
-        orbiter.orbit.calculate_time_series()
+        orbiter.orbit_projection.calculate_time_series()
 
     def __del__(self):
         self.controller.stop()

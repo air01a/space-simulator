@@ -91,6 +91,10 @@ class Controller:
         with open(flight_path) as json_file:
             data = json.load(json_file)
             self.attitude_control = data['flight_path']
+
+            self.attitude_control = []
+
+
             orbiter = self.orbiters.get_current_orbiter()
             r = v = Vector(0,0,0)
             if ('r' in data.keys()):
