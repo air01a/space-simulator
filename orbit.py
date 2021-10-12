@@ -24,6 +24,7 @@ class Orbit:
         self.polar = []
         self.cartesien = []
         self.M0 = 0
+        self.last_points = 0
 
     # Ratach orbit to a planet
     def set_attractor(self, attractor):
@@ -170,117 +171,17 @@ class Orbit:
         return v.norm() ** 2 / 2 - self.mu / r.norm()
 
 
-    # Coordonnates from ellipse reference to global axis
-    def get_eci(self,v):
-        ret = Vector(0.0,0.0,0.0)
-        rx = v.x
-        ry = v.y
-
-        cos_arg_pe = cos(self.arg_pe)
-        sin_arg_pe = sin(self.arg_pe)
-        cos_raan = cos(self.raan)
-        sin_raan = sin(self.raan)
-        cos_i = cos(self.i)
-        sin_i = sin(self.i)
 
 
-        ret.x = 0.0 + rx*(cos_arg_pe * cos_raan - sin_arg_pe * cos_i * sin_raan) - ry*( sin_arg_pe * cos_raan+ cos_arg_pe * cos_i * sin_raan)
-        ret.y = 0.0 + rx*(cos_arg_pe * sin_raan + sin_arg_pe * cos_i * cos_raan) + ry*(cos_arg_pe * cos_i * cos_raan - sin_arg_pe * sin_raan) 
-        ret.z = 0.0 + rx*(sin_arg_pe *  sin_i) + ry*cos_arg_pe *  sin_i
-        return ret
+ 
         
-        
-    # Get r from angle
-    def _get_polar_ellipse(self,angle):
-        if self.e<1:
-            r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
-        elif self.e==1:
-            r = self.a/(1+self.e*cos(angle))
-        else:
-            if 1+self.e*cos(angle)!=0:
-                r = self.a*(1-self.e**2)/(1+self.e*cos(angle))
-            else:
-                r = r = self.a*(1-self.e**2)/(1+self.e*cos(angle+0.0000001))
-        return r
-
-    def get_soi_collision_angle(self):
-        R = self.attractor.r.norm()-self.attractor.soi
-        #R2 = att.r.norm()+att.soi 
-        angle_collision1 = arccos( self.a*(1-self.e**2)/(R*self.e)- 1/self.e )
-        #angle_collision2 = acos( self.orbit.a*(1-self.orbit.e**2)/(R2*self.orbit.e)- 1/self.orbit.e )
-        return (angle_collision1,-angle_collision1)
-
-
     
-    def get_soi_collision_time(self,angle_collision,n):
-        
-        E = self.orbit.get_eccentric_from_true_anomaly(angle_collision)
-        M = E - self.orbit.e * sin(E)
-        return (M-self.orbit.M0)/n+self.orbit.t0
-
-        
-    # return ellipse points
-    def calculate_time_series(self, points=200):
-        series=[]
-        series_cartesien=[]
-
-        if (self.a==0):
-            return (series, series_cartesien)
-        angle = 0
-        increment = 2*pi / points 
-        angle_max = 2*pi
-
-        perihelion = self._get_polar_ellipse(0)
-        aphelion = self._get_polar_ellipse(pi)
-
-
-        if self.e==1:
-            angle = 0
-            angle_max = pi/3
-        elif self.e>1:
-            angle = -arccos(-1/self.e)
-            angle_max = -angle
-        else:
-
-            # to optimize calcul, we maximize the number of calculated points near the aphelion (x2), and we minimize it 
-            # near to perihelion (x0.5). 
-            coeff = 1.5/(perihelion-aphelion)
-            absc = 0.5-1.5/(perihelion-aphelion)*aphelion
-
-        if self.attractor.soi>0 and (aphelion > self.attractor.soi or self.e>=1):
-            (angle1,angle2) = self.get_soi_collision_angle()
-            angle = min(angle1,angle2)
-            angle_max = max(angle1,angle2)
-        while angle<=(angle_max+increment):
-            r=self._get_polar_ellipse(angle)
-            series.append((angle,r))
-            rv = Vector(r*cos(angle),r*sin(angle),0)
-    
-            pos = self.get_eci(rv)
-            if self.attractor==None or self.attractor.soi==0 or r < self.attractor.soi:
-                series_cartesien.append(pos)
-            # Maximise point on aphelion, minimize on perihelion 
-            if self.e<1:
-                angle+=increment*(r*coeff+absc)
-            else:
-                angle+=increment
-        
-        series.append((0,perihelion))
-        series_cartesien.append((self.get_eci(Vector(perihelion,0,0))))
-        if self.e<1:
-            series.append((pi,aphelion))
-            series_cartesien.append((self.get_eci(Vector(-aphelion,0,0))))
-        else:
-            series.append((None,None))
-            series_cartesien.append(None)
-        self.polar = series
-        self.cartesien = series_cartesien
 
     # get orbit period
     def get_orbital_period(self):
         return 2*np.pi*((self.a**3/self.mu)**0.5)
 
-
+    # Calculate R and V with Eccentric anomaly
     def get_state(self, E):
         anomaly = self.true_anomaly_from_eccentric(E)
 
@@ -394,7 +295,6 @@ class Orbit:
     # Use for time acceleration
     def update_position(self, t):
         if self.a !=0:
-            
             M = self.get_mean_from_t(t)
             try:  
                 E = self.get_eccentricity_from_mean(M)
@@ -415,3 +315,33 @@ class Orbit:
             logging.debug("v %s" % str(v))
             logging.debug("----------------------------")
             return (r,v)
+        return (0,0)
+
+# Coordonnates from ellipse reference to global axis
+    def get_eci(self,v):
+        cos_arg_pe = cos(self.arg_pe)
+        sin_arg_pe = sin(self.arg_pe)
+        cos_raan = cos(self.raan)
+        sin_raan = sin(self.raan)
+        cos_i = cos(self.i)
+        sin_i = sin(self.i)
+
+        result=[]
+        if not isinstance(v,list):
+            v_tab = [v]
+        else:
+            v_tab = v
+
+        for vec in v_tab:
+            ret = Vector(0.0,0.0,0.0)
+            rx = vec.x
+            ry = vec.y
+
+            ret.x = 0.0 + rx*(cos_arg_pe * cos_raan - sin_arg_pe * cos_i * sin_raan) - ry*( sin_arg_pe * cos_raan+ cos_arg_pe * cos_i * sin_raan)
+            ret.y = 0.0 + rx*(cos_arg_pe * sin_raan + sin_arg_pe * cos_i * cos_raan) + ry*(cos_arg_pe * cos_i * cos_raan - sin_arg_pe * sin_raan) 
+            ret.z = 0.0 + rx*(sin_arg_pe *  sin_i) + ry*cos_arg_pe *  sin_i
+            result.append(ret)
+
+        if not isinstance(v,list):
+            return result[0]
+        return result

@@ -1,0 +1,93 @@
+#:kivy 1.0.0
+
+# content here
+
+<ColoredLabel@Label>:
+    bg_color: 1.0, 1.0, 1.0
+    canvas.before:
+        Color:
+            rgba: self.bg_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<Compas>
+    canvas.before:
+        Rectangle:
+            source: 'images/compas.png'
+    background_normal: 'images/compas.png'
+<Graphics> 
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            orientation:'horizontal'
+            Compas:
+                id: compas
+                size_hint: None,None
+                size: 120,120
+                pos_hint: {"x":0, "top":1}
+
+            Button:
+                text: 'Engine On'
+                size: 200,60
+                size_hint: None,None
+                pos_hint: {"x":0, "top":1}
+                on_press: root.engine_on()
+        BoxLayout:
+            orientation: 'horizontal'
+            Button: 
+                size_hint: None,None
+                text: '<'
+                size: 20,30
+                on_press: root.on_orbiter_touch(-1)
+                background_normal: ''
+                background_color: 1, .3, .4, .85
+            Label:
+                id: orbiter_control
+                text : 'orbiter'
+                size_hint: None,None
+                size: 200,30
+            Button: 
+                size_hint: None,None
+                text: '>'
+                size: 20,30
+                on_press: root.on_orbiter_touch(1)
+                background_normal: ''
+                background_color: 1, .3, .4, .85
+            Button: 
+                size_hint: None,None
+                text: 'Control'
+                size: 100,30
+                on_press: root.change_orbiter()
+                background_normal: ''
+                background_color: 0.5, 0.5, 0.5, .85
+            Button: 
+                size_hint: None,None
+                text: 'GoTo'
+                size: 100,30
+        
+<MainWindow>
+    canvas.before:
+        Rectangle:
+            source : 'images/galaxy.jpeg'
+            pos : self.pos
+            size : self.size
+    BoxLayout:
+        size: root.width,root.height
+
+        orientation: 'vertical'
+        Graphics:
+            id: graphics
+            size_hint: 1, 0.8
+            pos:self.pos
+            size: self.size
+        ColoredLabel:
+            id: controlInfoLabel
+            size_hint: .5,.1
+            bg_color: (0, 0, 1, 0.25)
+        ColoredLabel:
+            id: infoLabel
+            size_hint: 1,.1
+            bg_color: 0, 1, 0, 0.25
+
+    

@@ -10,3 +10,5 @@ pyvenv.cfg
 *.pyc
 *.save
 *.csv
+.buildozer/*
+buildozer.spec

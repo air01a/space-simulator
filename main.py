@@ -1,101 +1,60 @@
-import time
-import sys
-import constants
-from vector import Vector
-from attractor import Attractor
-from orbiter import Orbiter, Stages, Stage_Composant, Orbiters, Load_Orbiters
-from pilotorbiter import PilotOrbiter
-from timecontroller import TimeController
-from event import EventListener
-from display import Display
-import logging
-from controller import Controller
-from numpy import pi
-
-
-
-logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
-
-
-earth = Attractor("Earth",Vector(0,0,0),6378140.0,constants.earth_mu)
-earth.set_atmosphere_condition(1.39,7900,120000)
-earth.set_picture("images/earth.png")
-(orbiter_name,orbiter) = Load_Orbiters.get_orbiter("rockets/ariane5.rocket")
+from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.clock import Clock
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.label import Label
+from kivy.graphics import Color, Rectangle
+from kivy.core.window import Window
 
 
 
 
-moon = Attractor("Moon",Vector(384000*1000,0,0),1737400,constants.moon_mu)
-moon.set_picture("images/moon.png")
-moon.set_soir(66100000)
-moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,2.9*pi/3)
-
-moon.update_position(0)
-earth.add_child(moon)
-
-orbiter.set_attractor(earth)
-zoom_ratio = 0.1
-
-event_listener = EventListener()
-time_controller = TimeController(1,event_listener,0)
-
-orbiter.r = Vector( 7478398.636344926, -3390921.6392330034, 4.152681331646193e-10)
-orbiter.v = Vector( -84.15524311869103, -8961.860683358305, 1.097511400027926e-12)
+from display import Graphics, Compas
+from spacetime import SpaceTime
 
 
-orbiters = Orbiters(time_controller)
-orbiters.add_orbiter(orbiter_name,orbiter)
-display = Display(earth,event_listener,zoom_ratio)
-pilot = PilotOrbiter(orbiters, event_listener)
+class MainWindow(BoxLayout):
 
-done = False
-clockinit = time.time()
-loop = 0
+    def __init__(self, **kwargs):
+        super(MainWindow, self).__init__(**kwargs)
 
-controller = Controller('missions/ariane5/geo.orbit',orbiters, time_controller)
+    def run(self):
+        self.space_time = SpaceTime()
 
-orbiter.r = Vector( -6524563.104025579, 3706639.4519880684, -4.5163113759516555e-10 )
-orbiter.v = Vector( 2693.983421383506, 9844.606589058822, -1.1739868065716526e-12 )
+        self.space_time.controller.control_info_callback = self.show_info_control
+        self.space_time.pilot.control_info_callback = self.show_info_control
+        zoom_ratio = 50
+        self.graphics = self.ids.graphics
+        self.graphics.init(self.space_time, zoom_ratio)
+        
+        event = Clock.schedule_interval(self.space_time.update, 1 / 60.)
+        display = Clock.schedule_interval(self.graphics.draw, 1 / 24.)
+        info = Clock.schedule_interval(self.show_info, 1 / 10.)
+        Window.bind(size=self.resize)
 
-time_controller.t_increment=327680/4
-time_controller.t = 1000
-orbiter.set_state(orbiter.r,orbiter.v,0)
-orbiter.orbit.calculate_time_series()
+    def show_info(self,ft):
+        self.ids.infoLabel.text = self.space_time.controller.get_info()
 
-while not done:
-    loop +=1
-    thrust = False
-    done = event_listener.pop_event()
-    orbiters.apply_remove()
-    for name in list(orbiters.get_orbiters().keys()):
-        if orbiter.thrust:
-            thrust=True
-        orbiter = orbiters.get_orbiter(name)
-        if time_controller.t_increment<=1 or orbiter.thrust!=0:
-            landed = orbiter.update_position(time_controller,time_controller.delta_t())
-        else:
-            landed = orbiter.update_position_delta_t(time_controller)
-        if landed :
-            if (orbiter.v.norm()>10):
-                print("Orbiter Crash")
-                orbiters.remove(name)
-            else:
-                print("Orbiter Landed") 
-                orbiter.v = Vector(0,0,0) 
-                orbiter.r = orbiter.attractor.radius * orbiter.r/orbiter.r.norm() 
+    def show_info_control(self,text):
+        self.ids.controlInfoLabel.text = text
 
-        if thrust and time_controller.t_increment>10:
-            time_controller.t_increment = 10
-    moon.update_position(time_controller.t)
+    def on_request_close(self, *args):
+        self.space_time.controller.stop()
 
-    display.draw(orbiters)
-    time_controller.update_time()
+
+
+    def resize(self, pos, size):
+        self.graphics.update()
     
-   
-controller.stop()
-clock = time.time()
 
-delta = clock - clockinit 
-print("Temps : %r, Loop : %r, iteration/s : %r" % (delta, loop, int(loop/(delta))))
+class SpaceSimulatorApp(App):
+    def build(self):
+        main = MainWindow()
+        main.run()
+        return main
 
 
+
+
+if __name__ == '__main__':
+    SpaceSimulatorApp().run()

@@ -8,7 +8,6 @@ from vector import Vector
 from orbit import Orbit
 import logging, inspect
 
-
 class Attractor:
 
     def __init__(self, name, r, radius, mu=None, mass=None, soi=0):
@@ -86,7 +85,10 @@ class Attractor:
         return g
 
     def update_position(self,t):
-        (self.r,self.v) = self.orbit.update_position(t)
+        if  self.orbit:
+            (self.r,self.v) = self.orbit.update_position(t)
+        for attractor in self.child:
+            attractor.update_position(t)
 
 
     def check_boundaries(self,r):
