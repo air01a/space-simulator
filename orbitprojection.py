@@ -9,13 +9,13 @@ class OrbitValues:
         self.aphelion = aphelion
         self.polar_points = polar_points
 
-
 class OrbitProjection:
 
     def __init__(self, attractor, orbit):
         self.attractor = attractor
         self.orbit = orbit
         self.cartesien = []
+        self.orbit_values = None
 
     # Get r from angle
     def _get_polar_ellipse(self,angle):
@@ -51,7 +51,7 @@ class OrbitProjection:
         if (self.orbit == None or self.orbit.a==0):
             return (series, series_cartesien)
         angle = 0
-        increment = 2*pi / points 
+
         angle_max = 2*pi
 
 
@@ -81,6 +81,7 @@ class OrbitProjection:
             angle = max(angle1,angle2)
             angle_max = 2*pi - angle
 
+        increment = (angle_max-angle) / points 
         # Calculate points
         while angle<(angle_max+increment):
             if angle>angle_max:
@@ -103,7 +104,13 @@ class OrbitProjection:
         perihelion = self.orbit.get_eci(Vector(perihelion,0,0))
 
         if self.orbit.e<1:
-            aphelion = self.orbit.get_eci(Vector(-aphelion,0,0))
+            if aphelion<self.attractor.soi:
+                aphelion = Vector(-aphelion,0,0)
+            else:
+                aphelion = Vector(-self.attractor.soi, 0,0)
+
+            aphelion = self.orbit.get_eci(aphelion)
+             
         else:
             aphelion = None
 
