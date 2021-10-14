@@ -170,13 +170,6 @@ class Orbit:
     def get_energy(self,r,v):
         return v.norm() ** 2 / 2 - self.mu / r.norm()
 
-
-
-
- 
-        
-    
-
     # get orbit period
     def get_orbital_period(self):
         return 2*np.pi*((self.a**3/self.mu)**0.5)

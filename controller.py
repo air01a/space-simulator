@@ -12,6 +12,40 @@ from vector import Vector
 
 
 class Controller:
+
+    def control_flight_path(self, orbiter):
+        if len(self.attitude_control)>0:
+            (param,alt,control,throttle) = self.attitude_control[0]
+        else:
+            return
+        
+        altitude = (orbiter.r.norm() - orbiter.attractor.radius)/1000
+        (perigee,apogee) = orbiter.orbit.get_limit()
+        perigee = int((perigee-orbiter.attractor.radius)/1000)
+        apogee = int((apogee - orbiter.attractor.radius)/1000)
+        perigee = max(0,perigee)
+        apogee = max(0,apogee)
+        velocity = orbiter.v.norm()/1000
+        if  ((param == 'alt'         and altitude > alt) or
+            (param == 'perihelion'  and perigee  > alt) or
+            (param == 'aphelion'    and apogee   > alt) or
+            (param == 'velocity'    and velocity   > alt) or
+            (param == 'time'        and self.time.t > alt)):
+
+            if self.control_info_callback:
+                self.control_info_callback("+++ Attitude Control Angle %i +++" % int(control))
+            self.attitude_control.pop(0)
+            orbiter.orientation1 = control * pi / 180
+            orbiter.stages.set_thrust("ALL",throttle/100)
+                
+        if len(orbiter.stages.empty_part)>0 and (len(orbiter.stages.stages)>1):
+            while len(orbiter.stages.empty_part)>0:
+                part_name = orbiter.stages.empty_part.pop(0)
+                self.orbiters.separate_stage(orbiter,part_name)
+                print("--------------------------------\n----  Separating %s"%part_name)
+                if self.control_info_callback:
+                    self.control_info_callback( "----  Separating %s"%part_name)
+
     def showControl(self):
         alt = None
         last_t = -1
@@ -92,7 +126,7 @@ class Controller:
             data = json.load(json_file)
             self.attitude_control = data['flight_path']
 
-            self.attitude_control = []
+            #self.attitude_control = []
 
 
             orbiter = self.orbiters.get_current_orbiter()
@@ -104,8 +138,8 @@ class Controller:
             orbiter.set_state(r,v,0)
 
 
-        self.thread = threading.Thread(target=self.showControl)
-        self.thread.start()
+        #self.thread = threading.Thread(target=self.showControl)
+        #self.thread.start()
 
     def stop(self):
         self.finish = True

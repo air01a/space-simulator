@@ -12,10 +12,9 @@
             size: self.size
 
 <Compas>
-    canvas.before:
-        Rectangle:
-            source: 'images/compas.png'
     background_normal: 'images/compas.png'
+
+
 <Graphics> 
     BoxLayout:
         orientation: 'vertical'
@@ -65,22 +64,25 @@
                 size_hint: None,None
                 text: 'GoTo'
                 size: 100,30
+                background_normal: ''
+                background_color: 0.2, 0.2, 0.5, .85
         
 <MainWindow>
     canvas.before:
         Rectangle:
             source : 'images/galaxy.jpeg'
             pos : self.pos
-            size : self.size
+            size : self.width, self.height
     BoxLayout:
         size: root.width,root.height
 
         orientation: 'vertical'
         Graphics:
             id: graphics
+
             size_hint: 1, 0.8
             pos:self.pos
-            size: self.size
+            size: self.width, self.height
         ColoredLabel:
             id: controlInfoLabel
             size_hint: .5,.1
@@ -90,4 +92,4 @@
             size_hint: 1,.1
             bg_color: 0, 1, 0, 0.25
 
-    
+

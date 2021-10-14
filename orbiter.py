@@ -43,7 +43,7 @@ class Stages:
         self.total_empty_mass = 0
         self.carburant_mass = 0
         self.drag_x_surf = 0
-
+        
     def add_stage(self):
         self.stages.append({})
     
@@ -111,7 +111,7 @@ class Stages:
 ########################################
 
 class Orbiter:
-    def __init__(self,stages):
+    def __init__(self,name,stages):
         self.orbit = None
         self.empty_mass = 0
         self.r = Vector(0.0,0.0,0.0)
@@ -124,6 +124,8 @@ class Orbiter:
         self.thrust = False
         self.last_a = Vector(0,0,0)
         self.orbit_projection = OrbitProjection(self.attractor, self.orbit)
+        self.controller = None
+        self.name = name
 
     def set_state(self,r,v,t):
         self.r = r
@@ -131,6 +133,9 @@ class Orbiter:
         if (self.r.norm()-self.attractor.radius>1000):
             self.orbit.set_from_state_vector(r,v,t)            
             
+
+    def set_controller(self, controller):
+        self.controller = controller
 
     def set_attractor(self, attractor):
         self.attractor = attractor
@@ -210,6 +215,9 @@ class Orbiter:
             self.last_a = a
             self.r = self.r + self.v * dt
 
+            if self.controller:
+                self.controller.control_flight_path(self)
+
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("Position "+str(self.r))
         logging.debug("Distance "+str(self.r.norm()))
@@ -275,6 +283,7 @@ class Orbiters:
         self.deleted_orbiters = []
         self.time = time
 
+
     def add_orbiter(self,name, orbiter):
         self.orbiters[name] = (orbiter)
         if len(self.orbiters)==1:
@@ -292,7 +301,6 @@ class Orbiters:
         return self.current_orbiter
     
     def get_current_orbiter_names(self):
-        print(self.orbiters.keys())
         return list(self.orbiters.keys())
 
     def get_orbiter(self, name):
@@ -327,7 +335,7 @@ class Orbiters:
         stages.add_stage()
         stages.add_part(part_name,part)
         
-        new_orbiter = Orbiter(stages)
+        new_orbiter = Orbiter(part_name,stages)
         new_orbiter.set_attractor(orbiter.attractor)
         self.add_orbiter(part_name,new_orbiter)
         new_orbiter.set_state(orbiter.r,orbiter.v,self.time.t)
@@ -366,5 +374,5 @@ class Load_Orbiters:
                     stages.add_part(part,Stage_Composant(int(ejected_mass), int(velocity), int(dry_mass), int(carburant_mass), float(drag_x_surf),payload))
             else:
                 finish = True
-        orbiter = Orbiter(stages)
+        orbiter = Orbiter(name,stages)
         return (name,orbiter)

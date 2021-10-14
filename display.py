@@ -74,58 +74,11 @@ class DrawTrajectory(Widget):
             Line(circle=(x,y,radius),width=1)
     
     def clear(self):
+        self.canvas.before.clear()
         self.canvas.clear()
+
     
 
-
-    # Test of ellipse instruction for elliptic orbit
-    # But not as fast as believed, and many problems due to orbit focus on focci
-    # and ellipse is based on center, so too many angle convertion to be efficient
-    def draw_trajectory_ellipse(self,dis, orbit,att_x,att_y,cartesien):
-        perihelion, aphelion = orbit.get_limit()
-        zoom_factor=dis.orbit_factor    
-
-        a = orbit.a
-        b = a * (1 - orbit.e**2)**0.5
-        center = ( a**2 - b**2 )**0.5
-
-        ellipse_x,ellipse_y = att_x + (center-a)*zoom_factor*dis.zoom_ratio, att_y-b*zoom_factor*dis.zoom_ratio
-        
-        with self.canvas:
-            self.canvas.clear()
-            PushMatrix()
-            Color(200,200,200)
-            angle = (orbit.arg_pe*180/pi % 360)
-            if orbit.i>pi/2:
-                angle = 180 - angle
-            else:
-                angle+=180
-            
-            #print(cartesien[0],cartesien[1]*180/pi)
-            if cartesien[0].y!=0:
-                vec = cartesien[0]
-                angle = atan(abs(vec.y)/(abs(vec.x)-center))
-                #anglemin = 90+(180+angle*180/pi)
-                #anglemax = 360+90-(180+angle*180/pi)
-                anglemin = 90 - abs(angle)*180/pi
-                anglemax =  90 + abs(angle)*180/pi
-            else:
-                anglemin = 0
-                anglemax = 359
-
-            points = 300
-            if (e>0.995):
-                points *= 5
-            Rotate(origin=(att_x,att_y),angle=angle)
-            Line(ellipse=( ellipse_x, ellipse_y, 2*a*dis.zoom_ratio*zoom_factor, 2*b*dis.zoom_ratio*zoom_factor, anglemin,anglemax,points))
-            Color(255,0,0)
-
-            Line(points=[att_x, att_y, att_x+aphelion*dis.zoom_ratio*zoom_factor,att_y])
-            Line(points=[att_x, att_y, att_x-perihelion*dis.zoom_ratio*zoom_factor,att_y])
-
-
-            PopMatrix()
-            Line(ellipse=(100,100,80,20,0, 240))
 
     # Draw trajectory of orbiter
     def draw_trajectory(self,dis,orbit,orbit_values,earth_x, earth_y,secondary=False):
@@ -133,14 +86,14 @@ class DrawTrajectory(Widget):
         color_elipse = (200,200,200)
         color_lines  = (218,238,241)
 
-        if len(orbit_values.points)<1:
+        if not orbit_values or len(orbit_values.points)<1:
             return
 
         max = orbit_values.aphelion
         min =  orbit_values.perihelion
         (x2,y2,z2)=orbit_values.points[0]
 
-        with self.canvas:
+        with self.canvas.before:
             if not secondary:
                 Color(color_elipse)
             else:
@@ -161,20 +114,17 @@ class DrawTrajectory(Widget):
             
             (x,y) = dis.center_orbit(min.x,min.y, True, earth_x,earth_y)
             Line(points=[earth_x,earth_y,x,y])
-        #with self.canvas:
-        #    Color(255,0,0)
-        #    (x,y) = dis.center_orbit(min_x,min_y, True, earth_x,earth_y)
-        #    Line(points=[x,y,earth_x,earth_y])
+
                 
     
     def draw_velocity(self, x,y,x2,y2):
-        with self.canvas:
+        with self.canvas.before:
             Color(0,0.5,0)
             Line(points=[x,y,x2,y2],width=4)
 
     def draw_ship(self, orbiter_x,orbiter_y,orientation):
 
-        with self.canvas:
+        with self.canvas.before:
             if orientation!=None:
                 Color(0,0,1)
                 head_x = 8*np.cos(orientation)
@@ -209,24 +159,18 @@ class Graphics(BoxLayout):
         self.orbiters.current_orbiter = self.ids.orbiter_control.text
 
     def init(self, world, zoom_ratio=1):
+        self.lock = False
         self.orbiter_index=0
-        self.goto = 'payload'
+        self.goto = None
         self.orbiters = world.orbiters
         self.ids.orbiter_control.text = self.orbiters.get_current_orbiter_name()
-        with self.canvas:
-            #self.background = Rectangle(source = "images/galaxy.jpeg", size=Window.size,pos=self.pos)
+        with self.canvas.before:
             Color(0.44,   0.64, 0.94,0.20)
             self.earth_atmosphere  = Ellipse()
             Color(1,1, 1, 1)
             self.draw_trajectory = DrawTrajectory()
             self.add_widget(self.draw_trajectory)
-
             Color(1,1, 1, 1)
-
-            #self.compas = Compas(world)
-            #self.compas.draw()
-
-            #self.add_widget(self.compas)
             self.ids.compas.init(world)
             self.earth_main_sprite = Rectangle(source = "images/earth.png")
             self.moon_main_sprite  = Rectangle(source = "images/moon.png")
@@ -251,24 +195,20 @@ class Graphics(BoxLayout):
         self.world.pilot.engine_on()
 
     def zoom_out(self):
-        self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1
-
-        size = max(20, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
-        
+        while self.lock:
+            time.spleep(0.01)
+        self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1        
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
-
         self.x_center = (self.width/2-self.earth_diameter)
         self.y_center = (self.height/2-self.earth_diameter)
 
     def zoom_in(self):
-        self.zoom_ratio = self.zoom_ratio-1.0 if self.zoom_ratio>1 else self.zoom_ratio*0.9
-        
-        size = max(20, (round(DEFAULT_EARTH_SIZE*self.zoom_ratio)))
-        
+        while self.lock:
+            time.spleep(0.01)
+        self.zoom_ratio = self.zoom_ratio-1.0 if self.zoom_ratio>1 else self.zoom_ratio*0.9        
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
         self.x_center = (self.width/2-self.earth_diameter)
         self.y_center = (self.height/2-self.earth_diameter)
-        self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
 
     def change_center(self):
         self.ship_centered = not self.ship_centered
@@ -280,8 +220,7 @@ class Graphics(BoxLayout):
 
         self.x_center  = self.width/2-self.earth_diameter 
         self.y_center  = self.height/2-self.earth_diameter 
-        self.background.size = Window.size
-        self.compas.repos()
+        #self.compas.repos()
 
 
     def center_orbit(self, x, y, force_earth_center=False,xearth=0,yearth=0):
@@ -295,7 +234,6 @@ class Graphics(BoxLayout):
         return (x,y)
 
     def draw(self,dt):
-        #self.update()
         orbiters = self.world.orbiters
         orbiter = orbiters.get_current_orbiter()
         if orbiter == None:
@@ -330,8 +268,10 @@ class Graphics(BoxLayout):
         (moon_x, moon_y) = self.center_orbit(moon_x-tx,moon_y-ty)
 
 
+        self.lock = True
+        self.draw_trajectory.clear()
 
-        with self.canvas:
+        with self.canvas.before:
             display_size = (6378140+120000)*self.orbit_factor*self.zoom_ratio
             self.earth_atmosphere.pos= (earth_x - display_size, earth_y - display_size)
             self.earth_atmosphere.size=(2*display_size,2*display_size)
@@ -339,7 +279,6 @@ class Graphics(BoxLayout):
             
 
             display_size = (soi)*self.orbit_factor*self.zoom_ratio
-            self.draw_trajectory.clear()
 
             self.draw_trajectory.draw_soi(int(moon_x),int(moon_y),display_size,BLUE)
             self.draw_trajectory.draw_soi(earth_x,earth_y, (384000000-66100000)*self.orbit_factor*self.zoom_ratio,BLUE)
@@ -381,7 +320,8 @@ class Graphics(BoxLayout):
                             self.draw_trajectory.draw_trajectory(self,orbiter2.orbit,orbit_values,earth_x,earth_y, True)
                            
 
-                    (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)
-                    self.draw_trajectory.draw_ship(orbiter_x,orbiter_y,None)
-            
+                    (orbiter2_x, orbiter2_y) = self.center_orbit(orbiter2_x,orbiter2_y)
+                    self.draw_trajectory.draw_ship(orbiter2_x,orbiter2_y,None)
+            self.lock = False
+
             
