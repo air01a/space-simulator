@@ -20,9 +20,6 @@ class MainWindow(BoxLayout):
 
     def run(self):
         self.space_time = SpaceTime()
-
-        self.space_time.controller.control_info_callback = self.show_info_control
-        self.space_time.pilot.control_info_callback = self.show_info_control
         zoom_ratio = 50
         self.graphics = self.ids.graphics
         self.graphics.init(self.space_time, zoom_ratio)

@@ -92,7 +92,6 @@ class Attractor:
 
 
     def check_boundaries(self,r):
-
         dist = r.norm()
         if dist>self.soi and self.soi>0:
             print("Parent")

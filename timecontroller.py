@@ -15,6 +15,8 @@ class TimeController():
         else:
             self.t_increment *= 2
 
+        if self.on_change_callback!=None:
+            self.on_change_callback(self.t_increment)
 
 
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
@@ -24,6 +26,8 @@ class TimeController():
     def time_normalize(self):
 
         self.t_increment = 0
+        if self.on_change_callback!=None:
+            self.on_change_callback(self.t_increment)
 
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("TimeSeed Real time" )
@@ -37,6 +41,8 @@ class TimeController():
         if self.t_increment < 0 :
             self.t_increment = 0
         
+        if self.on_change_callback!=None:
+            self.on_change_callback(self.t_increment)
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("TimeSeed %i" % self.t_increment)
         logging.debug("----------------------------")
@@ -54,12 +60,18 @@ class TimeController():
         self.t += (current_time - self.clock) * (1+self.t_increment)
         self.clock = current_time
 
+    def set_time_increment(self, increment):
+        self.t_increment = increment
+        if self.on_change_callback!=None:
+            self.on_change_callback(self.t_increment)
+
     def __init__(self, t0, event_listener, t_increment = 0):
         self.event_listener = event_listener
         self.t = t0
         self.t_increment = t_increment
         self.last_t = t0
         self.clock = time.time()
+        self.on_change_callback = None
         self.event_listener.add_key_event(120,self.time_accelerate,"Accelerate time")
         self.event_listener.add_key_event(119,self.time_decelarate,"Deccelerate time")
         self.event_listener.add_key_event(99,self.time_normalize,"Real time")

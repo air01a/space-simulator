@@ -308,7 +308,7 @@ class Orbit:
             logging.debug("v %s" % str(v))
             logging.debug("----------------------------")
             return (r,v)
-        return (0,0)
+        return (Vector(0,0,0),Vector(0,0,0))
 
 # Coordonnates from ellipse reference to global axis
     def get_eci(self,v):

@@ -43,9 +43,8 @@ class SpaceTime:
         self.pilot = PilotOrbiter(self.orbiters, self.event_listener)
         self.main_attractor = earth
 
-        self.controller = Controller('missions/ariane5/geo.orbit',self.orbiters, self.time_controller, control_info)
+        self.controller = Controller('missions/ariane5/geo.orbit',self.orbiters, self.time_controller)
         orbiter.set_controller(self.controller)
-
         #orbiter.r = Vector( -6524563.104025579, 3706639.4519880684, -4.5163113759516555e-10 )
         #orbiter.v = Vector( 2693.983421383506, 9844.606589058822, -1.1739868065716526e-12 )
         #orbiter.r = Vector( 0, earth.radius, 0 )
@@ -55,7 +54,7 @@ class SpaceTime:
 
         #orbiter.r = Vector( -6305069.872293199, 4544958.402749465, -5.548446001105239e-10)
         #orbiter.v = Vector(1989.0579153083816, 9224.919681644054, -1.1739868065716526e-12)
-        #orbiter.set_state(orbiter.r,orbiter.v,0)
+        orbiter.set_state(orbiter.r,orbiter.v,0)
         orbiter.orbit_projection.calculate_time_series()
 
     def __del__(self):
@@ -83,7 +82,7 @@ class SpaceTime:
                     orbiter.r = orbiter.attractor.radius * orbiter.r/orbiter.r.norm() 
 
             if thrust and self.time_controller.t_increment>10:
-                self.time_controller.t_increment = 10
+                self.time_controller.set_time_increment(10)
 
         self.main_attractor.update_position(self.time_controller.t)
         self.time_controller.update_time()

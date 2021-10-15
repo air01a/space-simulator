@@ -1,6 +1,6 @@
 # THE UGLY part 
 
-from math import e,pi, degrees, atan2,atan
+from math import e,pi, degrees, atan2,atan, log
 from kivy.graphics import *
 from kivy.uix.widget import Widget
 from kivy.core.image import Image as CoreImage
@@ -27,6 +27,7 @@ class Compas(Button):
 
         self.orbiters = spacetime.orbiters
         self.angle = 180
+        self.tmp = 180
 
 
     def on_touch_down(self, touch):
@@ -190,9 +191,26 @@ class Graphics(BoxLayout):
         world.event_listener.add_key_event(97, self.zoom_out, "Zoom out")
         world.event_listener.add_key_event(113, self.zoom_in, "Zoom in")
         self.world=world
-    
-    def engine_on(self):
-        self.world.pilot.engine_on()
+        self.world.controller.add_control_callback(self.control_info)
+        self.world.pilot.control_info_callback = self.control_info
+        self.world.time_controller.on_change_callback = self.set_time_slider
+
+    def control_info(self,message,thrust, orientation, engine=None):
+        if message:
+            self.parent.parent.ids.controlInfoLabel.text = message
+        elif thrust!=None and orientation!= None :
+            self.parent.parent.ids.controlInfoLabel.text = "+++ Attitude Control Angle %i +++" % int(orientation)
+        else:
+            print(message, thrust, orientation)
+
+        if engine!=None:
+            self.ids.switch.active=engine
+
+    def engine_on(self,active):
+        if active:
+            self.world.pilot.engine_on()
+        else:
+            self.world.pilot.engine_off()
 
     def zoom_out(self):
         while self.lock:
@@ -222,6 +240,21 @@ class Graphics(BoxLayout):
         self.y_center  = self.height/2-self.earth_diameter 
         #self.compas.repos()
 
+    def change_thrust(self, value):
+        self.world.pilot.set_thrust(value)
+
+
+    def change_time(self, value):
+        if value<10:
+            self.world.time_controller.t_increment = value
+        else:
+            self.world.time_controller.t_increment = 5*(1.2**value)
+
+
+    def set_time_slider(self, value):
+        if value>10:
+            value = int(log(value/5)/log(1.2))
+        self.ids.time.value = value
 
     def center_orbit(self, x, y, force_earth_center=False,xearth=0,yearth=0):
         if not force_earth_center:

@@ -18,20 +18,73 @@
 <Graphics> 
     BoxLayout:
         orientation: 'vertical'
+        size_hint: 1,1
+
         BoxLayout:
             orientation:'horizontal'
+            size_hint: None, None
+            size: root.size
             Compas:
                 id: compas
                 size_hint: None,None
                 size: 120,120
                 pos_hint: {"x":0, "top":1}
-
-            Button:
-                text: 'Engine On'
-                size: 200,60
-                size_hint: None,None
+            BoxLayout:
+                orientation: 'vertical'
                 pos_hint: {"x":0, "top":1}
-                on_press: root.engine_on()
+                size_hint: None,None
+                size: 300,160
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint: None,None
+                    size: 300, 80
+                    pos: 0, self.height-80
+                    Label:
+                        text: 'Engine'
+                        size: 320,80
+                    Switch:
+                        size: 100,80
+                        id: switch
+                        on_active: root.engine_on(self.active)
+                BoxLayout:
+                    orientation: 'horizontal'
+ 
+                    Slider:
+                        id: thrust
+                        min: 1
+                        max: 100
+                        step: 1
+                        value: 100
+                        size_hint: None,None
+                        size: 400,60
+                        on_value: root.change_thrust(self.value)
+                        orientation: 'horizontal'
+                        pos_hint: {"x":0, "top":1}
+
+            RelativeLayout:
+                orientation:'horizontal'
+                BoxLayout:
+                    orientation:'horizontal'
+                    size_hint: None, None
+                    size: 500,80
+                    pos_hint: { 'right': 1, 'top':1}
+                    Label:
+                        size: 200,80
+                        text: 'Time Factor'
+                        pos_hint: { 'right': 1, 'top':1}
+                    Slider:
+                        id:time
+                        min:0
+                        max:100
+                        step:1
+                        value:1
+                        size: 300,80
+                        size_hint: None, None
+                        pos_hint: { 'right': 1, 'top':1}
+                        orientation: 'horizontal'
+                        on_value: root.change_time(self.value)
+
+
         BoxLayout:
             orientation: 'horizontal'
             Button: 
@@ -66,6 +119,7 @@
                 size: 100,30
                 background_normal: ''
                 background_color: 0.2, 0.2, 0.5, .85
+
         
 <MainWindow>
     canvas.before:
@@ -75,21 +129,24 @@
             size : self.width, self.height
     BoxLayout:
         size: root.width,root.height
-
         orientation: 'vertical'
         Graphics:
             id: graphics
 
             size_hint: 1, 0.8
             pos:self.pos
-            size: self.width, self.height
+            #size: self.width, self.height
         ColoredLabel:
             id: controlInfoLabel
-            size_hint: .5,.1
+            #size_hint: .5,.1
+            size_hint: None, None
+            size: 600,100
             bg_color: (0, 0, 1, 0.25)
         ColoredLabel:
             id: infoLabel
-            size_hint: 1,.1
+            #size_hint: 1,.1
+            size_hint: None, None
+            size: root.width, 100
             bg_color: 0, 1, 0, 0.25
 
 
