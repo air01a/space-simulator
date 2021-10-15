@@ -8,7 +8,7 @@ from kivy.core.window import Window
 import numpy as np
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-
+import time
 from vector import Vector
 
 DEFAULT_EARTH_SIZE = 111
@@ -159,6 +159,9 @@ class Graphics(BoxLayout):
     def change_orbiter(self):
         self.orbiters.current_orbiter = self.ids.orbiter_control.text
 
+    def drop_payload(self):
+        self.world.pilot.drop_payload()
+
     def init(self, world, zoom_ratio=1):
         self.lock = False
         self.orbiter_index=0
@@ -194,7 +197,8 @@ class Graphics(BoxLayout):
         self.world.controller.add_control_callback(self.control_info)
         self.world.pilot.control_info_callback = self.control_info
         self.world.time_controller.on_change_callback = self.set_time_slider
-
+        self.set_zoom_display()
+        
     def control_info(self,message,thrust, orientation, engine=None):
         if message:
             self.parent.parent.ids.controlInfoLabel.text = message
@@ -212,21 +216,44 @@ class Graphics(BoxLayout):
         else:
             self.world.pilot.engine_off()
 
-    def zoom_out(self):
-        while self.lock:
-            time.spleep(0.01)
-        self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1        
+
+    def adapt_zoom(self):
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
         self.x_center = (self.width/2-self.earth_diameter)
         self.y_center = (self.height/2-self.earth_diameter)
+        
+
+    def change_zoom(self, value):
+        while self.lock:
+            time.sleep(0.01)
+        value = 10 - value
+        if value<0:
+            self.zoom_ratio = 1 / 1.1**abs(value)
+        else:
+            self.zoom_ratio = 1 + 2**abs(value)
+        self.adapt_zoom()
+
+    def set_zoom_display(self):
+        if self.zoom_ratio<1:
+            value = 10 + log(1/self.zoom_ratio)/log(1.1)
+        else:
+            value = 10 + log(self.zoom_ratio-1)/log(2)
+        self.ids.zoom.value = value
+        
+
+    def zoom_out(self):
+        while self.lock:
+            time.sleep(0.01)
+        self.zoom_ratio = self.zoom_ratio+1.0 if self.zoom_ratio>1 else self.zoom_ratio*1.1        
+        self.adapt_zoom()
+        self.set_zoom_display() 
 
     def zoom_in(self):
         while self.lock:
-            time.spleep(0.01)
+            time.sleep(0.01)
         self.zoom_ratio = self.zoom_ratio-1.0 if self.zoom_ratio>1 else self.zoom_ratio*0.9        
-        self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
-        self.x_center = (self.width/2-self.earth_diameter)
-        self.y_center = (self.height/2-self.earth_diameter)
+        self.adapt_zoom()
+        self.set_zoom_display() 
 
     def change_center(self):
         self.ship_centered = not self.ship_centered

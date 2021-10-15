@@ -14,8 +14,8 @@ from vector import Vector
 class Controller:
 
     def control_flight_path(self, orbiter):
-        if len(self.attitude_control)>0:
-            (param,alt,control,throttle) = self.attitude_control[0]
+        if orbiter.name in self.attitude_control.keys() and len(self.attitude_control[orbiter.name])>0:
+            (param,alt,control,throttle) = self.attitude_control[orbiter.name][0]
         else:
             return
         
@@ -34,7 +34,7 @@ class Controller:
 
             if len(self.control_info_callback)>0:
                 self.update_info("",throttle,int(control))
-            self.attitude_control.pop(0)
+            self.attitude_control[orbiter.name].pop(0)
             orbiter.orientation1 = control * pi / 180
             orbiter.stages.set_thrust("ALL",throttle/100)
                 
@@ -130,9 +130,15 @@ class Controller:
         self.time = timecontroller
         self.finish = False
         self.control_info_callback = []
+        
         with open(flight_path) as json_file:
             data = json.load(json_file)
-            self.attitude_control = data['flight_path']
+            self.attitude_control = data
+            for orb in data.keys():
+                #self.attitude_control = data[orb]
+                orbiter = self.orbiters.get_orbiter(orb)
+                if orbiter != None:
+                    orbiter.set_controller(self)
 
             #self.attitude_control = []
 

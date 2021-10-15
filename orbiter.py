@@ -304,7 +304,9 @@ class Orbiters:
         return list(self.orbiters.keys())
 
     def get_orbiter(self, name):
-        return self.orbiters[name]
+        if name in self.orbiters.keys():
+            return self.orbiters[name]
+        return None
 
     def get_orbiters(self):
         return self.orbiters

@@ -46,6 +46,7 @@
                         size: 100,80
                         id: switch
                         on_active: root.engine_on(self.active)
+
                 BoxLayout:
                     orientation: 'horizontal'
  
@@ -64,29 +65,56 @@
             RelativeLayout:
                 orientation:'horizontal'
                 BoxLayout:
-                    orientation:'horizontal'
-                    size_hint: None, None
-                    size: 500,80
+                    orientation: 'vertical'
+                    size: 500,160
                     pos_hint: { 'right': 1, 'top':1}
-                    Label:
-                        size: 200,80
-                        text: 'Time Factor'
-                        pos_hint: { 'right': 1, 'top':1}
-                    Slider:
-                        id:time
-                        min:0
-                        max:100
-                        step:1
-                        value:1
-                        size: 300,80
+                    size_hint: None, None
+                    BoxLayout:
+                        orientation:'horizontal'
                         size_hint: None, None
+                        size: 500,80
                         pos_hint: { 'right': 1, 'top':1}
-                        orientation: 'horizontal'
-                        on_value: root.change_time(self.value)
+                        Label:
+                            size: 200,80
+                            text: 'Time Factor'
+                            pos_hint: { 'right': 1, 'top':1}
+                        Slider:
+                            id:time
+                            min:0
+                            max:100
+                            step:1
+                            value:1
+                            size: 300,80
+                            size_hint: None, None
+                            pos_hint: { 'right': 1, 'top':1}
+                            orientation: 'horizontal'
+                            on_value: root.change_time(self.value)
+                    BoxLayout:
+                        orientation:'horizontal'
+                        size_hint: None, None
+                        size: 500,80
+                        pos_hint: { 'right': 1, 'top':1}
+                        Label:
+                            size: 200,80
+                            text: 'Zoom Factor'
+                            pos_hint: { 'right': 1, 'top':1}
+                        Slider:
+                            id:zoom
+                            min:0
+                            max:100
+                            step:1
+                            value:1
+                            size: 300,80
+                            size_hint: None, None
+                            pos_hint: { 'right': 1, 'top':1}
+                            orientation: 'horizontal'
+                            on_value: root.change_zoom(self.value)
+                    
 
 
         BoxLayout:
             orientation: 'horizontal'
+            spacing: 5
             Button: 
                 size_hint: None,None
                 text: '<'
@@ -119,8 +147,14 @@
                 size: 100,30
                 background_normal: ''
                 background_color: 0.2, 0.2, 0.5, .85
+            Button:
+                size_hint: None,None
+                text: 'drop payload'
+                size: 180,30
+                background_normal: ''
+                background_color: 0.4, 0.2, 0.5, .85
+                on_press: root.drop_payload()
 
-        
 <MainWindow>
     canvas.before:
         Rectangle:
