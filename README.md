@@ -25,15 +25,15 @@ Propagate Kepler time equation to accelerate time
 
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/kepler_propagation.gif)
 
-Manage Drag Force in atmosphere, rocket multi staging, motors parameters, flight management (attitude change with altitude, speed, or perihelion/aphelion), change attractor.
+Manage Drag Force in atmosphere, rocket multi staging, motors parameters, flight management (attitude change with altitude, speed, or perihelion/aphelion), change attractor (moon / earth).
 
-## Curent working features
+## In progress
 
 Take into account lift and improve drag
 
 Load spacecraft and mission control through json
 
-Attractor with children, sphere of influence, solar system modelisation
+solar system modelisation
 
 Hohmann transfer calculator
 
