@@ -286,17 +286,22 @@ class Orbit:
 
     # Propagate kepler equation to calculate Velocity and position
     # Use for time acceleration
+    def update_angle(self,t):
+        M = self.get_mean_from_t(t)
+        try:  
+            E = self.get_eccentricity_from_mean(M)
+            self.last_E = E
+        except:
+            E = self.last_E
+            print("non convergent")
+        self.M0 = M
+        self.t0 = t
+        return E
+
+
     def update_position(self, t):
         if self.a !=0:
-            M = self.get_mean_from_t(t)
-            try:  
-                E = self.get_eccentricity_from_mean(M)
-                self.last_E = E
-            except:
-                E = self.last_E
-                print("non convergent")
-            self.M0 = M
-            self.t0 = t
+            E = self.update_angle(t)
             (r,v) = self.get_state(E)
             r = self.get_eci(r)
             v = self.get_eci(v)

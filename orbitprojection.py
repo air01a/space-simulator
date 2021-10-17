@@ -38,9 +38,53 @@ class OrbitProjection:
         return (angle_collision1,-angle_collision1)
     
     def get_collision_time(self,angle_collision,n):
+        if angle_collision<0:
+            angle_collision = 2 * pi + angle_collision 
         E = self.orbit.get_eccentric_from_true_anomaly(angle_collision)
         M = E - self.orbit.e * sin(E)
-        return (M-self.orbit.M0)/n+self.orbit.t0
+        t = abs((M-self.orbit.M0)/n)+self.orbit.t0
+        return t
+
+    def get_position(self,angle):
+        r=self._get_polar_ellipse(angle)
+        return Vector(r*cos(angle),r*sin(angle),0)
+
+
+    def intersect_child_attractor(self,attractor,aphelion):
+        print(attractor.name)
+        time_interval = []
+        position_at_time = []
+        n = (self.orbit.mu/(self.orbit.a**3))**0.5
+
+        (a1, a2) = self.get_collision_angle(attractor.r.norm()-attractor.soi)
+        (a1, a2) = (self.get_collision_time(a1,n),self.get_collision_time(a2,n))
+
+        if (aphelion>attractor.r.norm()+attractor.soi):
+            (a3,a4) = self.get_collision_angle( attractor.r.norm()+attractor.soi) 
+            (a3,a4) =(self.get_collision_time(a3,n),self.get_collision_time(a4,n))
+            time_interval.append([a1,a3])
+            time_interval.append([a2,a4])
+            position_at_time.append(self.get_position(a1))
+            position_at_time.append(self.get_position(a3))
+            position_at_time.append(self.get_position(a2))
+            position_at_time.append(self.get_position(a4))
+
+        else:
+            time_interval.append([a1,a2])
+            position_at_time.append(self.get_position(a1))
+            position_at_time.append(self.get_position(a2))
+
+        position_at_time = self.orbit.get_eci(position_at_time)
+
+        
+        for index,value in enumerate(time_interval):
+            (t1,t2) = value 
+            attractor_position1, attractor_speed1 = attractor.orbit.update_position(t1)
+            attractor_position2, attractor_speed2 = attractor.orbit.update_position(t2)
+            #attractor_position1 = self.orbit.get_eci(attractor_position1)
+            #attractor_position2 = self.orbit.get_eci(attractor_position2)
+            print(attractor.soi - (attractor_position1 - position_at_time[index*2]).norm())
+            print(attractor.soi - (attractor_position2 - position_at_time[index*2+1]).norm())
 
 
     # return ellipse points
@@ -65,6 +109,11 @@ class OrbitProjection:
         elif self.orbit.e>1:
             angle = -arccos(-1/self.orbit.e)
             angle_max = -angle-0.00000001
+
+        for att in self.attractor.child:
+            if aphelion > att.r.norm()-att.soi:
+                self.intersect_child_attractor(att, aphelion)
+        #perihelion = self.orbit.get_eci(Vector(perihelion,0,0))
 
 
         # If we go outside the current attractor SOI
