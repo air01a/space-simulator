@@ -43,7 +43,7 @@ class SpaceTime:
         self.pilot = PilotOrbiter(self.orbiters, self.event_listener)
         self.main_attractor = earth
 
-        self.controller = Controller('missions/ariane5/geo.orbit',self.orbiters, self.time_controller)
+        self.controller = Controller('missions/ariane5/apollo.orbit',self.orbiters, self.time_controller)
         #orbiter.set_controller(self.controller)
         #orbiter.r = Vector( -6524563.104025579, 3706639.4519880684, -4.5163113759516555e-10 )
         #orbiter.v = Vector( 2693.983421383506, 9844.606589058822, -1.1739868065716526e-12 )

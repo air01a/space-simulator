@@ -16,27 +16,26 @@ class Controller:
     def control_flight_path(self, orbiter):
         if orbiter.name in self.attitude_control.keys() and len(self.attitude_control[orbiter.name])>0:
             (param,alt,control,throttle) = self.attitude_control[orbiter.name][0]
-        else:
-            return
-        
-        altitude = (orbiter.r.norm() - orbiter.attractor.radius)/1000
-        (perigee,apogee) = orbiter.orbit.get_limit()
-        perigee = int((perigee-orbiter.attractor.radius)/1000)
-        apogee = int((apogee - orbiter.attractor.radius)/1000)
-        perigee = max(0,perigee)
-        apogee = max(0,apogee)
-        velocity = orbiter.v.norm()/1000
-        if  ((param == 'alt'         and altitude > alt) or
-            (param == 'perihelion'  and perigee  > alt) or
-            (param == 'aphelion'    and apogee   > alt) or
-            (param == 'velocity'    and velocity   > alt) or
-            (param == 'time'        and self.time.t > alt)):
 
-            if len(self.control_info_callback)>0:
-                self.update_info("",throttle,int(control))
-            self.attitude_control[orbiter.name].pop(0)
-            orbiter.orientation1 = control * pi / 180
-            orbiter.stages.set_thrust("ALL",throttle/100)
+        
+            altitude = (orbiter.r.norm() - orbiter.attractor.radius)/1000
+            (perigee,apogee) = orbiter.orbit.get_limit()
+            perigee = int((perigee-orbiter.attractor.radius)/1000)
+            apogee = int((apogee - orbiter.attractor.radius)/1000)
+            perigee = max(0,perigee)
+            apogee = max(0,apogee)
+            velocity = orbiter.v.norm()/1000
+            if  ((param == 'alt'         and altitude > alt) or
+                (param == 'perihelion'  and perigee  > alt) or
+                (param == 'aphelion'    and apogee   > alt) or
+                (param == 'velocity'    and velocity   > alt) or
+                (param == 'time'        and self.time.t > alt)):
+
+                if len(self.control_info_callback)>0:
+                    self.update_info("",throttle,int(control))
+                self.attitude_control[orbiter.name].pop(0)
+                orbiter.orientation1 = control * pi / 180
+                orbiter.stages.set_thrust("ALL",throttle/100)
                 
         if len(orbiter.stages.empty_part)>0 and (len(orbiter.stages.stages)>1):
             while len(orbiter.stages.empty_part)>0:
