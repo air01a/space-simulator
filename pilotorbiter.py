@@ -8,21 +8,31 @@ class PilotOrbiter:
     def engine_on(self,thrust = 1):
         self.orbiters.get_current_orbiter().stages.set_thrust("ALL",thrust)
         self.orbiters.get_current_orbiter().thrust = True
+        self.orbiters.get_current_orbiter().display_info(self.orbiters.time.t)
+
         if self.control_info_callback:
             self.control_info_callback("+++ Engine started +++", None, None, True)
     
     def engine_off(self):
         self.orbiters.get_current_orbiter().thrust = False
+        self.orbiters.get_current_orbiter().display_info(self.orbiters.time.t)
+    
         if self.control_info_callback:
             self.control_info_callback("+++ Engine stopped +++", None, None, False)
 
     def set_thrust(self, thrust):
+        self.orbiters.get_current_orbiter().display_info(self.orbiters.time.t)
+        self.orbiters.get_current_orbiter().lock = None
         self.orbiters.get_current_orbiter().stages.set_thrust("ALL", thrust/100)
 
     def turn_right(self):
+        self.orbiters.get_current_orbiter().display_info(self.orbiters.time.t)
+        self.orbiters.get_current_orbiter().lock = None
         self.orbiters.get_current_orbiter().orientation1 -= pi/20
 
     def turn_left(self):
+        self.orbiters.get_current_orbiter().display_info(self.orbiters.time.t)
+
         self.orbiters.get_current_orbiter().orientation1 += pi/20
 
     def drop_payload(self):

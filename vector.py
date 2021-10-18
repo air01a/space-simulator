@@ -65,6 +65,14 @@ class Vector:
 
         return self.__class__(x,y,z)
 
+    def angle2D(self):
+        angle = np.arctan(self.y/self.x)
+        if self.x<0: 
+            return angle + np.pi
+
+        return angle
+
+
     # Enable use of - sign to substracte vector
     def __sub__(self,v):
         return self.__add__(v*-1)

@@ -203,8 +203,8 @@ class Graphics(BoxLayout):
         if message:
             self.parent.parent.ids.controlInfoLabel.text = message
         elif thrust!=None and orientation!= None :
-            self.parent.parent.ids.controlInfoLabel.text = "+++ Attitude Control Angle %i +++" % int(orientation)
-        else:
+            self.parent.parent.ids.controlInfoLabel.text = "+++ Attitude Control Angle %s +++" % str(orientation)
+        elif message!=None:
             print(message, thrust, orientation)
 
         if engine!=None:
@@ -216,6 +216,8 @@ class Graphics(BoxLayout):
         else:
             self.world.pilot.engine_off()
 
+    def drop_stage(self):
+        self.orbiters.separate_full_stage(self.orbiters.get_current_orbiter())
 
     def adapt_zoom(self):
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2
@@ -265,7 +267,6 @@ class Graphics(BoxLayout):
 
         self.x_center  = self.width/2-self.earth_diameter 
         self.y_center  = self.height/2-self.earth_diameter 
-        #self.compas.repos()
 
     def change_thrust(self, value):
         self.world.pilot.set_thrust(value)

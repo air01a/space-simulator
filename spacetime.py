@@ -14,6 +14,19 @@ from kivy.clock import Clock
 
 
 class SpaceTime:
+    def show_info(self):
+        orbiter = self.orbiters.get_current_orbiter()
+        altitude = (orbiter.r.norm() - orbiter.attractor.radius)/1000
+        (perigee,apogee) = orbiter.orbit.get_limit()
+        perigee = int((perigee-orbiter.attractor.radius)/1000)
+        apogee = int((apogee - orbiter.attractor.radius)/1000)
+        perigee = max(0,perigee)
+        apogee = max(0,apogee)
+        velocity = orbiter.v.norm()/1000
+        print("%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(self.time_controller.t),orbiter.thrust,altitude, velocity,int(orbiter.stages.get_carburant_mass()),int(orbiter.orientation1*180/3.141592),perigee,apogee))
+
+
+
     def __init__(self,control_info = None):
         logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
         self.event_listener = EventListener()
@@ -28,7 +41,7 @@ class SpaceTime:
         moon = Attractor("Moon",Vector(384000*1000,0,0),1737400,constants.moon_mu)
         moon.set_picture("images/moon.png")
         moon.set_soir(66100000)
-        moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,2.4*pi/3)
+        moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,3*pi/3)
 
         moon.update_position(0)
         earth.add_child(moon)
@@ -43,7 +56,7 @@ class SpaceTime:
         self.pilot = PilotOrbiter(self.orbiters, self.event_listener)
         self.main_attractor = earth
 
-        self.controller = Controller('missions/ariane5/apollo.orbit',self.orbiters, self.time_controller)
+        self.controller = Controller('missions/apollo/apollo.orbit',self.orbiters, self.time_controller)
         #orbiter.set_controller(self.controller)
         #orbiter.r = Vector( -6524563.104025579, 3706639.4519880684, -4.5163113759516555e-10 )
         #orbiter.v = Vector( 2693.983421383506, 9844.606589058822, -1.1739868065716526e-12 )
@@ -55,6 +68,10 @@ class SpaceTime:
         #orbiter.r = Vector( -6305069.872293199, 4544958.402749465, -5.548446001105239e-10)
         #orbiter.v = Vector(1989.0579153083816, 9224.919681644054, -1.1739868065716526e-12)
         #orbiter.set_state(orbiter.r,orbiter.v,0)
+
+        orbiter.r = Vector( -2440038.190849225, 6300272.642030265, -7.715608724818002e-10)
+        orbiter.v = Vector( 9212.087393355065, 5585.145747212256, -6.839830862094941e-13)
+        orbiter.set_state(orbiter.r,orbiter.v,0)
         orbiter.orbit_projection.calculate_time_series()
 
     def __del__(self):
@@ -64,7 +81,7 @@ class SpaceTime:
         self.orbiters.apply_remove()
         thrust = False
         for name in list(self.orbiters.get_orbiters().keys()):
-            
+      #      self.show_info()
             orbiter = self.orbiters.get_orbiter(name)
             if orbiter.thrust:
                 thrust=True

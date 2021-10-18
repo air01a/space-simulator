@@ -105,6 +105,12 @@ class Stages:
     def get_carburant_mass(self):
         return self.carburant_mass
 
+
+    def drop_stage(self):
+        for part in list(self.stages[0].keys()):
+            self.sep_part(part)
+
+
 ########################################
 # Define an orbiter from stages
 # Manage acceleration and force
@@ -126,6 +132,10 @@ class Orbiter:
         self.orbit_projection = OrbitProjection(self.attractor, self.orbit)
         self.controller = None
         self.name = name
+        self.lock = None
+
+    def drop_stage(self):
+        self.stages.drop_stage()
 
     def set_state(self,r,v,t):
         self.r = r
@@ -147,6 +157,7 @@ class Orbiter:
     def change_orientation(self, o1, o2):
         self.orientation1 = o1
         self.orientation2 = o2
+        self.lock=None
 
     def get_force(self):
         ra = self.r.norm()
@@ -164,8 +175,18 @@ class Orbiter:
             time_controller.time_normalize()
 
 
+    def lock_orientation_prograde(self):
+        self.lock = 'P'
 
+    def lock_orientation_retrograde(self):
+        self.lock = 'R'
 
+    def set_attitude(self):
+
+        if self.lock=='R':
+            self.orientation1 = pi+self.v.angle2D()
+        elif self.lock=='P':
+            self.orientation1 = self.v.angle2D()
 
     # Apply forces and update vector v and r
     def update_position(self, time_controller,dt):
@@ -218,6 +239,8 @@ class Orbiter:
             if self.controller:
                 self.controller.control_flight_path(self)
 
+        self.set_attitude()
+
         logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
         logging.debug("Position "+str(self.r))
         logging.debug("Distance "+str(self.r.norm()))
@@ -230,13 +253,9 @@ class Orbiter:
         if trajectory_update and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
             self.orbit_projection.calculate_time_series()
-            #(perihelion, aphelion) = self.orbit.get_limit()
-            #n = (self.orbit.mu/(self.orbit.a**3))**0.5
-
 
 
         self.check_boundaries(time_controller)
-
 
         # Detect rocket crash
         if (self.r.norm() < self.attractor.radius):
@@ -251,9 +270,14 @@ class Orbiter:
     # Propagate kepler equation to calculate Velocity and position
     # Use for time acceleration
     def update_position_delta_t(self, time_controller):
+
+        if self.controller:
+            self.controller.control_flight_path(self)
+
         (self.r,self.v) = self.orbit.update_position(time_controller.t)
         self.check_boundaries(time_controller)
         
+        self.set_attitude()
 
         if (self.r.norm() < self.attractor.radius):
             return True
@@ -271,6 +295,17 @@ class Orbiter:
         self.dv = v_direction * thrust/mass
         return self.dv
 
+
+    def display_info(self,t):
+
+        altitude = (self.r.norm() - self.attractor.radius)/1000
+        (perigee,apogee) = self.orbit.get_limit()
+        perigee = int((perigee-self.attractor.radius)/1000)
+        apogee = int((apogee - self.attractor.radius)/1000)
+        perigee = max(0,perigee)
+        apogee = max(0,apogee)
+        velocity = self.v.norm()/1000
+        print("%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(t),self.thrust,altitude, velocity,int(self.stages.get_carburant_mass()),int(self.orientation1*180/3.141592),perigee,apogee))
 
 ########################################
 # Handle multiple orbiters
@@ -311,6 +346,9 @@ class Orbiters:
     def get_orbiters(self):
         return self.orbiters
 
+
+    
+
     def remove(self, name):
         self.deleted_orbiters.append(name)
 
@@ -347,6 +385,10 @@ class Orbiters:
         print(part)
         print("#############################################")
 
+    def separate_full_stage(self,orbiter):
+        for part in list(orbiter.stages.stages[0].keys()):
+            self.separate_stage(orbiter, part)
+            
 ########################################
 # Load an orbiter from an INI file
 ########################################

@@ -50,14 +50,19 @@ class TimeController():
     def delta_t(self):
         return self.t-self.last_t
 
+    def set_limiter(self,t):
+        if t not in self.limiter and self.t<t:
+            self.limiter.append(t)
+            self.limiter.sort()
+
     def update_time(self):
-        
         self.last_t = self.t
-        #if self.t_increment!=0:
-         #   self.t += self.t_increment
-        #else:
         current_time = time.time()
         self.t += (current_time - self.clock) * (1+self.t_increment)
+        if len(self.limiter)>0 and self.t>=self.limiter[0]:
+            self.t = self.limiter[0]+0.00001
+            self.limiter.pop(0)
+
         self.clock = current_time
 
     def set_time_increment(self, increment):
@@ -76,5 +81,6 @@ class TimeController():
         self.event_listener.add_key_event(119,self.time_decelarate,"Deccelerate time")
         self.event_listener.add_key_event(99,self.time_normalize,"Real time")
         self.time_slow = []
+        self.limiter = []
 
 
