@@ -57,6 +57,8 @@ class Stages:
         self.drag_x_surf += part.drag_x_surf
     
     def sep_part(self,name,stage=0):
+        if len(self.stages)<2:
+            return
         if name in self.stages[stage].keys():
             part = self.stages[stage][name]
         else:
@@ -133,14 +135,25 @@ class Orbiter:
         self.controller = None
         self.name = name
         self.lock = None
+        self.control_info_callback = None
+
+    def start_engine(self):
+        self.thrust = 1
+
+    
+    def stop_engine(self):
+        self.thrust = 0
+
 
     def drop_stage(self):
         self.stages.drop_stage()
 
+     
+
     def set_state(self,r,v,t):
         self.r = r
         self.v = v
-        if (self.r.norm()-self.attractor.radius>1000):
+        if (self.attractor!=None and self.r.norm()-self.attractor.radius>1000):
             self.orbit.set_from_state_vector(r,v,t)            
             
 
@@ -178,8 +191,10 @@ class Orbiter:
     def lock_orientation_prograde(self):
         self.lock = 'P'
 
+
     def lock_orientation_retrograde(self):
         self.lock = 'R'
+
 
     def set_attitude(self):
 
@@ -261,10 +276,6 @@ class Orbiter:
         if (self.r.norm() < self.attractor.radius):
             return True
         return False
-
-
-    
-        
 
 
     # Propagate kepler equation to calculate Velocity and position
@@ -362,7 +373,7 @@ class Orbiters:
                 if self.current_orbiter == None and len(self.orbiters)>0:
                     self.current_orbiter = list(self.orbiters.keys())[0]
 
-    def separate_stage(self, orbiter, part_name):
+    def separate_stage(self, orbiter, part_name,thrust=0):
         if part_name in orbiter.stages.empty_part:
             orbiter.stages.empty_part.pop(orbiter.stage.empty_part.index(part_name))
         if (part_name == "payload"):
@@ -380,7 +391,7 @@ class Orbiters:
         self.add_orbiter(part_name,new_orbiter)
         new_orbiter.set_state(orbiter.r,orbiter.v,self.time.t)
         new_orbiter.orbit_projection.calculate_time_series()
-        orbiter.thrust = 1
+        orbiter.thrust = thrust
         print("############# Stage Separation ##############")
         print(part)
         print("#############################################")
@@ -388,7 +399,7 @@ class Orbiters:
     def separate_full_stage(self,orbiter):
         for part in list(orbiter.stages.stages[0].keys()):
             self.separate_stage(orbiter, part)
-            
+
 ########################################
 # Load an orbiter from an INI file
 ########################################

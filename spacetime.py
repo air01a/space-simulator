@@ -10,7 +10,7 @@ import logging
 from controller import Controller
 from numpy import pi
 from kivy.clock import Clock
-
+from scenery import Scenery
 
 
 class SpaceTime:
@@ -25,23 +25,37 @@ class SpaceTime:
         velocity = orbiter.v.norm()/1000
         print("%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]"%(int(self.time_controller.t),orbiter.thrust,altitude, velocity,int(orbiter.stages.get_carburant_mass()),int(orbiter.orientation1*180/3.141592),perigee,apogee))
 
+    def __init__(self,file_name,control_info = None):
+        logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
+        self.event_listener = EventListener()
+        
+        scene = Scenery(file_name)
+        self.main_attractor = scene.read_attractor('MAIN')
+
+        self.time_controller = TimeController(1,self.event_listener,0)
+        self.orbiters = scene.read_orbiters(self.time_controller)
+
+        self.pilot = PilotOrbiter(self.orbiters, self.event_listener)
+
+        self.controller = scene.read_mission(self.time_controller)
 
 
-    def __init__(self,control_info = None):
+
+    def __init__2(self,control_info = None):
         logging.basicConfig(format='Debug:%(message)s', level=logging.INFO)
         self.event_listener = EventListener()
         
  
-        earth = Attractor("Earth",Vector(0,0,0),6378140.0,constants.earth_mu)
+        earth = Attractor("Earth",6378140.0,constants.earth_mu)
         earth.set_atmosphere_condition(1.39,7900,120000)
         earth.set_picture("images/earth.png")
         earth.set_soir(925000000)
         #earth.set_soir(384000*1000 - 66100000)
 
-        moon = Attractor("Moon",Vector(384000*1000,0,0),1737400,constants.moon_mu)
+        moon = Attractor("Moon",1737400,constants.moon_mu)
         moon.set_picture("images/moon.png")
         moon.set_soir(66100000)
-        moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,3*pi/3)
+        moon.set_orbit_parameters(constants.earth_mu, 384000*1000,0,pi,pi,0,2.91*pi/3)
 
         moon.update_position(0)
         earth.add_child(moon)
@@ -102,4 +116,5 @@ class SpaceTime:
                 self.time_controller.set_time_increment(10)
 
         self.main_attractor.update_position(self.time_controller.t)
+        #print(self.time_controller.t, self.main_attractor.child[0].r)
         self.time_controller.update_time()

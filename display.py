@@ -47,7 +47,6 @@ class Compas(Button):
             new_angle = calc if calc > 0 else 360+calc
 
             self.angle = (self.tmp + (new_angle-self.prev_angle))%360
-            print(self.angle)
             self.orbiters.get_current_orbiter().orientation1=(self.angle*2*pi/180+pi/2)%(2*pi)
             self.draw()
 
@@ -218,6 +217,7 @@ class Graphics(BoxLayout):
 
     def drop_stage(self):
         self.orbiters.separate_full_stage(self.orbiters.get_current_orbiter())
+        self.engine_on(False)
 
     def adapt_zoom(self):
         self.earth_diameter = self.zoom_ratio*DEFAULT_EARTH_SIZE/2

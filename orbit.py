@@ -42,9 +42,17 @@ class Orbit:
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i , raan, arg_pe, f)
         E = self.get_eccentric_from_true_anomaly()
         self.M0 = self.get_m0(E)
+        self.init_eci_coeff()
+
         
 
-
+    def init_eci_coeff(self):
+        self.cos_arg_pe = cos(self.arg_pe)
+        self.sin_arg_pe = sin(self.arg_pe)
+        self.cos_raan = cos(self.raan)
+        self.sin_raan = sin(self.raan)
+        self.cos_i = cos(self.i)
+        self.sin_i = sin(self.i)
 
     # Calculate kelpler from velocity and position
     def set_from_state_vector(self,r,v, t = 0):
@@ -129,7 +137,7 @@ class Orbit:
         logging.debug("f " + str(f))
         logging.debug("----------------------------")
         (self.a, self.e, self.i, self.raan, self.arg_pe, self.f) = (a, e, i, raan, arg_pe, f)
-        
+        self.init_eci_coeff()
         E = self.get_eccentric_from_true_anomaly()
 
         if self.e < 1:
@@ -317,12 +325,7 @@ class Orbit:
 
 # Coordonnates from ellipse reference to global axis
     def get_eci(self,v):
-        cos_arg_pe = cos(self.arg_pe)
-        sin_arg_pe = sin(self.arg_pe)
-        cos_raan = cos(self.raan)
-        sin_raan = sin(self.raan)
-        cos_i = cos(self.i)
-        sin_i = sin(self.i)
+
 
         result=[]
         if not isinstance(v,list):
@@ -335,9 +338,9 @@ class Orbit:
             rx = vec.x
             ry = vec.y
 
-            ret.x = 0.0 + rx*(cos_arg_pe * cos_raan - sin_arg_pe * cos_i * sin_raan) - ry*( sin_arg_pe * cos_raan+ cos_arg_pe * cos_i * sin_raan)
-            ret.y = 0.0 + rx*(cos_arg_pe * sin_raan + sin_arg_pe * cos_i * cos_raan) + ry*(cos_arg_pe * cos_i * cos_raan - sin_arg_pe * sin_raan) 
-            ret.z = 0.0 + rx*(sin_arg_pe *  sin_i) + ry*cos_arg_pe *  sin_i
+            ret.x = 0.0 + rx*(self.cos_arg_pe * self.cos_raan - self.sin_arg_pe * self.cos_i * self.sin_raan) - ry*( self.sin_arg_pe * self.cos_raan+ self.cos_arg_pe * self.cos_i * self.sin_raan)
+            ret.y = 0.0 + rx*(self.cos_arg_pe * self.sin_raan + self.sin_arg_pe * self.cos_i * self.cos_raan) + ry*(self.cos_arg_pe * self.cos_i * self.cos_raan - self.sin_arg_pe * self.sin_raan) 
+            ret.z = 0.0 + rx*(self.sin_arg_pe *  self.sin_i) + ry*self.cos_arg_pe *  self.sin_i
             result.append(ret)
 
         if not isinstance(v,list):

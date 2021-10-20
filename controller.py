@@ -25,8 +25,10 @@ class Controller:
             apogee = max(0,apogee)
             velocity = orbiter.v.norm()/1000
 
-            if param=='time':
-                self.time.set_limiter(alt)
+            if param=='timelimiter':
+                self.time.set_timespeed_limiter(int(alt),int(control),int(throttle))
+                self.attitude_control[orbiter.name].pop(0)
+
 
             if  ((param == 'alt'         and altitude > alt) or
                 (param == 'perihelion'  and perigee  > alt) or
@@ -45,7 +47,7 @@ class Controller:
                 elif control == 'RETROGRADE':
                     control = orbiter.lock_orientation_retrograde()
                 else:
-                    orbiter.orientation1 = control * pi / 180
+                    orbiter.orientation1 = int(control) * pi / 180
 
                 orbiter.stages.set_thrust("ALL",throttle/100)
 
@@ -59,7 +61,7 @@ class Controller:
         if len(orbiter.stages.empty_part)>0 and (len(orbiter.stages.stages)>1):
             while len(orbiter.stages.empty_part)>0:
                 part_name = orbiter.stages.empty_part.pop(0)
-                self.orbiters.separate_stage(orbiter,part_name)
+                self.orbiters.separate_stage(orbiter,part_name,1)
                 print("--------------------------------\n----  Separating %s"%part_name)
                 if len(self.control_info_callback)>0:
                     self.update_info( "----  Separating %s"%part_name, None, None)
@@ -103,15 +105,15 @@ class Controller:
                 orbiter = self.orbiters.get_orbiter(orb)
                 if orbiter != None:
                     orbiter.set_controller(self)
-                    self.attitude_control[orbiter.name]=[]
+                    #self.attitude_control[orbiter.name]=[]
 
             orbiter = self.orbiters.get_current_orbiter()
             r = v = Vector(0,0,0)
             if ('r' in data.keys()):
                 r = Vector(data['r'])
-            if ('v' in data.keys()):
-                v = Vector(data['v'])
-            orbiter.set_state(r,v,0)
+                if ('v' in data.keys()):
+                    v = Vector(data['v'])
+                    orbiter.set_state(r,v,0)
 
 
     def stop(self):

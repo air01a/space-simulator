@@ -41,7 +41,6 @@ uranus_mu  = uranus_mass  * constant_of_gravitation
 neptune_mu = neptune_mass * constant_of_gravitation
 moon_mu    = moon_mass    * constant_of_gravitation
 
-
 mercury_radius_polar = mercury_radius_mean = mercury_radius_equatorial
 venus_radius_polar = venus_radius_mean = venus_radius_equatorial
 

@@ -10,13 +10,13 @@ import logging, inspect
 
 class Attractor:
 
-    def __init__(self, name, r, radius, mu=None, mass=None, soi=0):
+    def __init__(self, name, radius, mu=None, mass=None, soi=0):
         self.mass = mass
         self.soi =  soi
         self.name = name
         self.parent = None
         self.child = []
-        self.r = r
+        self.r = Vector(0,0,0)
         self.v = Vector(0,0,0)
 
         self.mu = mu

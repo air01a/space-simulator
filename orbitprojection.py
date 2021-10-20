@@ -8,6 +8,7 @@ class OrbitValues:
         self.perihelion = perihelion
         self.aphelion = aphelion
         self.polar_points = polar_points
+        self.child = None
 
 class OrbitProjection:
 
@@ -51,34 +52,33 @@ class OrbitProjection:
 
 
     def intersect_child_attractor(self,attractor,aphelion):
-        print(attractor.name)
         time_interval = []
         position_at_time = []
         n = (self.orbit.mu/(self.orbit.a**3))**0.5
 
         (a1, a2) = self.get_collision_angle(attractor.r.norm()-attractor.soi)
-        (a1, a2) = (self.get_collision_time(a1,n),self.get_collision_time(a2,n))
+        (a1t, a2t) = (self.get_collision_time(a1,n),self.get_collision_time(a2,n))
 
         if (aphelion>attractor.r.norm()+attractor.soi):
             (a3,a4) = self.get_collision_angle( attractor.r.norm()+attractor.soi) 
-            (a3,a4) =(self.get_collision_time(a3,n),self.get_collision_time(a4,n))
-            time_interval.append([a1,a3])
-            time_interval.append([a2,a4])
+            (a3t,a4t) =(self.get_collision_time(a3,n),self.get_collision_time(a4,n))
+            time_interval.append([a1t,a3t])
+            time_interval.append([a2t,a4t])
             position_at_time.append(self.get_position(a1))
             position_at_time.append(self.get_position(a3))
             position_at_time.append(self.get_position(a2))
             position_at_time.append(self.get_position(a4))
 
         else:
-            time_interval.append([a1,a2])
+            time_interval.append([a1t,a2t])
             position_at_time.append(self.get_position(a1))
             position_at_time.append(self.get_position(a2))
 
         position_at_time = self.orbit.get_eci(position_at_time)
-
         
         for index,value in enumerate(time_interval):
             (t1,t2) = value 
+            print(t1,t2)
             attractor_position1, attractor_speed1 = attractor.orbit.update_position(t1)
             attractor_position2, attractor_speed2 = attractor.orbit.update_position(t2)
             #attractor_position1 = self.orbit.get_eci(attractor_position1)
@@ -88,10 +88,10 @@ class OrbitProjection:
 
 
     # return ellipse points
-    def calculate_time_series(self, points=200):
+    def calculate_time_series(self, points=200, recursive = False):
         series=[]
         series_cartesien=[]
-
+        escape_soi = False
         if (self.orbit == None or self.orbit.a==0):
             return (series, series_cartesien)
         angle = 0
@@ -110,9 +110,7 @@ class OrbitProjection:
             angle = -arccos(-1/self.orbit.e)
             angle_max = -angle-0.00000001
 
-        for att in self.attractor.child:
-            if aphelion > att.r.norm()-att.soi:
-                self.intersect_child_attractor(att, aphelion)
+        
         #perihelion = self.orbit.get_eci(Vector(perihelion,0,0))
 
 
@@ -122,6 +120,8 @@ class OrbitProjection:
             (angle1,angle2) = self.get_collision_angle(self.attractor.soi)
             angle = min(angle1,angle2)
             angle_max = max(angle1,angle2)
+            if not recursive:
+                escape_soi = True
 
         # If we cross the attractor
         # Do not calculate point that are inside
@@ -131,6 +131,7 @@ class OrbitProjection:
             angle_max = 2*pi - angle
 
         increment = (angle_max-angle) / points 
+
         # Calculate points
         while angle<(angle_max+increment):
             if angle>angle_max:
@@ -141,15 +142,29 @@ class OrbitProjection:
             series.append((angle,r))
 
             # Populate cartesien coordonnates
-            rv = Vector(r*cos(angle),r*sin(angle),0)
+            rv = self.orbit.get_eci(Vector(r*cos(angle),r*sin(angle),0))
             
             # If we are outside the attractor SOI, do not calculate 
             if self.attractor==None or self.attractor.soi==0 or r <= self.attractor.soi:
+
+            #    for att in self.attractor.child:
+             #       if rv.norm()>att.r.norm()-att.soi:
+              #          print("sup")    
+               #     else:
                 series_cartesien.append(rv)
-            angle+=increment
+                
+            # More point when near the aphelion
+            if self.orbit.e>0.9 and self.orbit.e<1 and self.orbit.a>100000000:
+                if angle > pi/2 and angle < 3*pi/2:
+                    local_increment = increment/4
+                else:
+                    local_increment = increment*4
+            else:
+                local_increment = increment
+            angle+=local_increment
 
         # Transform coordonnates to ECI
-        series_cartesien = self.orbit.get_eci(series_cartesien)
+        #series_cartesien = self.orbit.get_eci(series_cartesien)
         perihelion = self.orbit.get_eci(Vector(perihelion,0,0))
 
         if self.orbit.e<1:
@@ -164,3 +179,5 @@ class OrbitProjection:
             aphelion = None
 
         self.orbit_values = OrbitValues(series_cartesien,series, perihelion,aphelion)
+
+

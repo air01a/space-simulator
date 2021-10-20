@@ -8,7 +8,6 @@ import logging, inspect
 
 
 class TimeController():
-
     def time_accelerate(self):
         if self.t_increment<5:
             self.t_increment += 1
@@ -50,18 +49,34 @@ class TimeController():
     def delta_t(self):
         return self.t-self.last_t
 
-    def set_limiter(self,t):
-        if t not in self.limiter and self.t<t:
-            self.limiter.append(t)
-            self.limiter.sort()
+    def set_time_checkpoint(self,t):
+        if t not in self.checkpoint and self.t<t:
+            self.checkpoint.append(t)
+            self.checkpoint.sort()
+
+    def set_timespeed_limiter(self, t0,speed_limit,t1):
+        self.time_speed_limiter.append((t0,speed_limit,t1))
+        self.set_time_checkpoint(t0)
+
 
     def update_time(self):
         self.last_t = self.t
         current_time = time.time()
+
+        # Check if there is a time speed limiter condition
+        if len(self.time_speed_limiter)>0:
+            for index, (t,speed_limit,t1) in enumerate(self.time_speed_limiter):
+                if self.t>=t:
+                    self.t_increment = speed_limit
+                    if self.t>=t1:
+                        self.time_speed_limiter.pop(index)
+        
         self.t += (current_time - self.clock) * (1+self.t_increment)
-        if len(self.limiter)>0 and self.t>=self.limiter[0]:
-            self.t = self.limiter[0]+0.00001
-            self.limiter.pop(0)
+
+        # Check if there is a checkpoint 
+        if len(self.checkpoint)>0 and self.t>=self.checkpoint[0]:
+            self.t = self.checkpoint[0]
+            self.checkpoint.pop(0)
 
         self.clock = current_time
 
@@ -81,6 +96,7 @@ class TimeController():
         self.event_listener.add_key_event(119,self.time_decelarate,"Deccelerate time")
         self.event_listener.add_key_event(99,self.time_normalize,"Real time")
         self.time_slow = []
-        self.limiter = []
+        self.checkpoint = []
+        self.time_speed_limiter = []
 
 
