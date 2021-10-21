@@ -42,7 +42,10 @@ class OrbitProjection:
         if angle_collision<0:
             angle_collision = 2 * pi + angle_collision 
         E = self.orbit.get_eccentric_from_true_anomaly(angle_collision)
-        M = E - self.orbit.e * sin(E)
+        if self.orbit.e<1:
+            M = E - self.orbit.e * sin(E)
+        else:
+            M = self.orbit.e * sinh(E) -E
         t = abs((M-self.orbit.M0)/n)+self.orbit.t0
         return t
 
@@ -97,6 +100,7 @@ class OrbitProjection:
         angle = 0
 
         angle_max = 2*pi
+        n = (self.orbit.mu/(abs(self.orbit.a)**3))**0.5
 
 
         # Calculate max and min
@@ -120,8 +124,7 @@ class OrbitProjection:
             (angle1,angle2) = self.get_collision_angle(self.attractor.soi)
             angle = min(angle1,angle2)
             angle_max = max(angle1,angle2)
-            if not recursive:
-                escape_soi = True
+
 
         # If we cross the attractor
         # Do not calculate point that are inside
@@ -133,7 +136,7 @@ class OrbitProjection:
         increment = (angle_max-angle) / points 
 
         # Calculate points
-        while angle<(angle_max+increment):
+        while angle<(angle_max+increment) and not escape_soi:
             if angle>angle_max:
                 angle = angle_max
 
@@ -146,12 +149,21 @@ class OrbitProjection:
             
             # If we are outside the attractor SOI, do not calculate 
             if self.attractor==None or self.attractor.soi==0 or r <= self.attractor.soi:
+                if self.attractor.child == None:
+                    series_cartesien.append(rv)
+                else:
+                    for att in self.attractor.child:
+                        if rv.norm()>att.r.norm()-att.soi and rv.norm()<att.r.norm()+att.soi:
+                            t = self.get_collision_time(angle, n)
+                            print(t)
 
-            #    for att in self.attractor.child:
-             #       if rv.norm()>att.r.norm()-att.soi:
-              #          print("sup")    
-               #     else:
-                series_cartesien.append(rv)
+                            (r,v) = att.orbit.update_position(t) 
+                            d = (r-rv).norm()
+                            if (abs(d)<att.soi):
+                                print(r,rv)
+                                print("interception",att.name,t,r,rv,d,att.soi,d-att.soi)
+                                escape_soi = True
+                    series_cartesien.append(rv)
                 
             # More point when near the aphelion
             if self.orbit.e>0.9 and self.orbit.e<1 and self.orbit.a>100000000:

@@ -154,8 +154,8 @@ class Orbiter:
         self.r = r
         self.v = v
         if (self.attractor!=None and self.r.norm()-self.attractor.radius>1000):
-            self.orbit.set_from_state_vector(r,v,t)            
-            
+            self.orbit.set_from_state_vector(r,v,t) 
+            print("set_state")
 
     def set_controller(self, controller):
         self.controller = controller
@@ -183,7 +183,6 @@ class Orbiter:
             (r,v) = self.attractor.change_attractor(self.r,self.v, new_attractor, self.attractor)
             self.set_attractor( new_attractor)
             self.set_state(r,v,time_controller.t)
-        
             self.orbit_projection.calculate_time_series()
             time_controller.time_normalize()
 
@@ -284,7 +283,6 @@ class Orbiter:
 
         if self.controller:
             self.controller.control_flight_path(self)
-
         (self.r,self.v) = self.orbit.update_position(time_controller.t)
         self.check_boundaries(time_controller)
         
@@ -356,9 +354,6 @@ class Orbiters:
 
     def get_orbiters(self):
         return self.orbiters
-
-
-    
 
     def remove(self, name):
         self.deleted_orbiters.append(name)

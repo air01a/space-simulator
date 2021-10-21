@@ -53,6 +53,7 @@ class Orbit:
         self.sin_raan = sin(self.raan)
         self.cos_i = cos(self.i)
         self.sin_i = sin(self.i)
+        print(self.cos_arg_pe,self.sin_arg_pe,self.cos_raan ,self.sin_raan,self.cos_i,self.sin_i  )
 
     # Calculate kelpler from velocity and position
     def set_from_state_vector(self,r,v, t = 0):
@@ -84,6 +85,8 @@ class Orbit:
                 # eccentricity vector and its x component.
                 #arg_pe = np.arccos(ev.x / ev.norm())
                 arg_pe = math.atan2(ev.y,ev.x)
+              
+                # a tester !!!
                 if (h.z<0):
                     arg_pe=2*pi-arg_pe
                 
@@ -115,16 +118,16 @@ class Orbit:
                     f = 2 * np.pi - f
         else:
             # already managed by h.z<0???
-           # if ev.z < 0 :
-            #    arg_pe = 2 * np.pi - arg_pe
-            #    print("ev.z<0")
+            if ev.z < 0 and h.z>0:
+                arg_pe = 2 * np.pi - arg_pe
+                print("ev.z<0")
             
             
             # True anomaly is angle between eccentricity
             # vector and position vector.
             f = np.arccos(ev.dot(r) / (ev.norm() * r.norm()))
 
-            if r.dot(v) < 0:
+            if r.dot(v) < 0 :
                 f = 2 * np.pi - f
 
 
@@ -313,7 +316,6 @@ class Orbit:
             (r,v) = self.get_state(E)
             r = self.get_eci(r)
             v = self.get_eci(v)
- 
             logging.debug("+++++ %s - %s" % (inspect.getfile(inspect.currentframe()), inspect.currentframe().f_code.co_name))
             logging.debug("dt %i" % (t-self.t0))
             logging.debug("E %r" % E)
@@ -325,7 +327,6 @@ class Orbit:
 
 # Coordonnates from ellipse reference to global axis
     def get_eci(self,v):
-
 
         result=[]
         if not isinstance(v,list):

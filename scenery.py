@@ -63,8 +63,12 @@ class Scenery:
             (orbiter_name,orbiter) = Load_Orbiters.get_orbiter(file)
             r = Vector(float(x),float(y),float(z))
             v = Vector(float(vx),float(vy),float(vz))
-            orbiter.set_state(r,v,0)
+
             orbiter.set_attractor(self.attractors[attractor])
+            orbiter.set_state(r,v,0)
+            orbiter.orbit_projection.calculate_time_series()
+
+
             orbiters.add_orbiter(orbiter_name,orbiter)
         self.orbiters  = orbiters
         return orbiters
