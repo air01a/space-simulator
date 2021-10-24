@@ -66,7 +66,7 @@ class Scenery:
 
             orbiter.set_attractor(self.attractors[attractor])
             orbiter.set_state(r,v,0)
-            orbiter.orbit_projection.calculate_time_series()
+            orbiter.orbit_projection.calculate_time_series(0)
 
 
             orbiters.add_orbiter(orbiter_name,orbiter)

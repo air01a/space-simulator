@@ -96,24 +96,25 @@ class DrawTrajectory(Widget):
         with self.canvas.before:
             if not secondary:
                 Color(color_elipse)
+                dashed=0
             else:
                 Color(0,1,1)
+                dashed=4
             for (x,y,z) in orbit_values.points[1:-1]:
                 (xc,yc) = dis.center_orbit( x,y, True, earth_x,earth_y)
                 (x2,y2) = dis.center_orbit(x2,y2, True, earth_x,earth_y)
-                Line(points=[xc,yc,x2,y2])
+                Line(points=[xc,yc,x2,y2],dash_offset=dashed)
 
                 (x2,y2) = (x,y)
-            if secondary:
-                Color(1,0,0)
-            else:
+
+            if max!=None and not secondary:
                 Color(1,0,0,0.3)
-            if max!=None:
+
                 (x,y) = dis.center_orbit(max.x,max.y, True, earth_x,earth_y)
                 Line(points=[earth_x,earth_y,x,y])
             
-            (x,y) = dis.center_orbit(min.x,min.y, True, earth_x,earth_y)
-            Line(points=[earth_x,earth_y,x,y])
+                (x,y) = dis.center_orbit(min.x,min.y, True, earth_x,earth_y)
+                Line(points=[earth_x,earth_y,x,y])
 
                 
     
@@ -356,11 +357,18 @@ class Graphics(BoxLayout):
             self.earth_main_sprite.size  = (self.earth_diameter*2,self.earth_diameter*2)
             
             orbit_values = orbiter.orbit_projection.orbit_values
+
             if not moon:
                 self.draw_trajectory.draw_trajectory(self,orbiter.orbit,orbit_values,earth_x,earth_y)
+                if orbiter.orbit_projection.orbit_values.child:
+                    self.draw_trajectory.draw_trajectory(self,orbiter.orbit_projection.orbit_values.child.orbit,orbiter.orbit_projection.orbit_values.child.orbit_values,moon_x,moon_y,True)
+                   
                 #self.draw_trajectory.draw_trajectory(self,orbiter.orbit,earth_x,earth_y)
             else:
                 self.draw_trajectory.draw_trajectory(self,orbiter.orbit,orbit_values,moon_x,moon_y)
+                if orbiter.orbit_projection.orbit_values.child:
+                    self.draw_trajectory.draw_trajectory(self,orbiter.orbit_projection.orbit_values.child.orbit,orbiter.orbit_projection.orbit_values.child.orbit_values,earth_x,earth_y, True)
+
                 #self.draw_trajectory.draw_trajectory2(self,orbiter.orbit,moon_x,moon_y)
 
             self.draw_trajectory.draw_velocity(orbiter_x,orbiter_y,orbiter_x+orbiter.v.x/125,orbiter_y+orbiter.v.y/125)

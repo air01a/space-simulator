@@ -53,7 +53,6 @@ class Orbit:
         self.sin_raan = sin(self.raan)
         self.cos_i = cos(self.i)
         self.sin_i = sin(self.i)
-        print(self.cos_arg_pe,self.sin_arg_pe,self.cos_raan ,self.sin_raan,self.cos_i,self.sin_i  )
 
     # Calculate kelpler from velocity and position
     def set_from_state_vector(self,r,v, t = 0):
@@ -120,7 +119,7 @@ class Orbit:
             # already managed by h.z<0???
             if ev.z < 0 and h.z>0:
                 arg_pe = 2 * np.pi - arg_pe
-                print("ev.z<0")
+                #print("ev.z<0")
             
             
             # True anomaly is angle between eccentricity

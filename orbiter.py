@@ -155,7 +155,6 @@ class Orbiter:
         self.v = v
         if (self.attractor!=None and self.r.norm()-self.attractor.radius>1000):
             self.orbit.set_from_state_vector(r,v,t) 
-            print("set_state")
 
     def set_controller(self, controller):
         self.controller = controller
@@ -183,7 +182,7 @@ class Orbiter:
             (r,v) = self.attractor.change_attractor(self.r,self.v, new_attractor, self.attractor)
             self.set_attractor( new_attractor)
             self.set_state(r,v,time_controller.t)
-            self.orbit_projection.calculate_time_series()
+            self.orbit_projection.calculate_time_series(time_controller.t)
             time_controller.time_normalize()
 
 
@@ -266,7 +265,7 @@ class Orbiter:
         # If the trajectory has changed, update the kepler projection
         if trajectory_update and self.r.norm() > self.attractor.radius and self.v.norm()>0:
             self.set_state(self.r,self.v,t)
-            self.orbit_projection.calculate_time_series()
+            self.orbit_projection.calculate_time_series(t)
 
 
         self.check_boundaries(time_controller)
@@ -385,7 +384,7 @@ class Orbiters:
         new_orbiter.set_attractor(orbiter.attractor)
         self.add_orbiter(part_name,new_orbiter)
         new_orbiter.set_state(orbiter.r,orbiter.v,self.time.t)
-        new_orbiter.orbit_projection.calculate_time_series()
+        new_orbiter.orbit_projection.calculate_time_series(self.time.t)
         orbiter.thrust = thrust
         print("############# Stage Separation ##############")
         print(part)

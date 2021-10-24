@@ -21,6 +21,10 @@ Show current trajectory (kepler equations)
 
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/trajectory2.png)
 
+Manage Sphere of influence of other attractor and display future trajectory
+
+![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/trajectory3.png)
+
 Propagate Kepler time equation to accelerate time
 
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/kepler_propagation.gif)

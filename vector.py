@@ -92,3 +92,7 @@ class Vector:
     # Convert vector to str
     def __str__(self):
         return "[ %r, %r, %r]" %(self.x,self.y,self.z)
+
+    # Unary operator
+    def __neg__(self):
+        return self.__mul__(-1)
