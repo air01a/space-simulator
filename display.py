@@ -360,13 +360,13 @@ class Graphics(BoxLayout):
 
             if not moon:
                 self.draw_trajectory.draw_trajectory(self,orbiter.orbit,orbit_values,earth_x,earth_y)
-                if orbiter.orbit_projection.orbit_values.child:
+                if orbiter.orbit_projection.orbit_values and orbiter.orbit_projection.orbit_values.child:
                     self.draw_trajectory.draw_trajectory(self,orbiter.orbit_projection.orbit_values.child.orbit,orbiter.orbit_projection.orbit_values.child.orbit_values,moon_x,moon_y,True)
                    
                 #self.draw_trajectory.draw_trajectory(self,orbiter.orbit,earth_x,earth_y)
             else:
                 self.draw_trajectory.draw_trajectory(self,orbiter.orbit,orbit_values,moon_x,moon_y)
-                if orbiter.orbit_projection.orbit_values.child:
+                if orbiter.orbit_projection.orbit_values and orbiter.orbit_projection.orbit_values.child:
                     self.draw_trajectory.draw_trajectory(self,orbiter.orbit_projection.orbit_values.child.orbit,orbiter.orbit_projection.orbit_values.child.orbit_values,earth_x,earth_y, True)
 
                 #self.draw_trajectory.draw_trajectory2(self,orbiter.orbit,moon_x,moon_y)

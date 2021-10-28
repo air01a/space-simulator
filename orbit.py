@@ -171,6 +171,7 @@ class Orbit:
             return 2 * arctan( tan (f / 2) / ((1+self.e)/(1-self.e)) ** 0.5 )
         if self.e!=1:
             return 2 * arctanh( tan (f / 2) / ((self.e+1)/(self.e-1)) ** 0.5 )
+            
         return 0
 
     def get_eccentricity(self,r,v):
@@ -252,7 +253,8 @@ class Orbit:
             #sv = ((e * e - 1) ** 0.5) * sinh(E)
             #cv = e - cosh(E)
             #v = atan2(sv, cv)
-
+        if counter>=self.MAX_ITERATIONS:
+            return None
         return E
 
     # Calculate velocity from Eccentricity
@@ -267,7 +269,8 @@ class Orbit:
     def true_anomaly_from_eccentric(self, E):
         """Convert eccentric anomaly to true anomaly."""
         if self.e<1:
-            return 2 * math.atan2(math.sqrt(1 + self.e) * math.sin(E / 2), math.sqrt(1 - self.e) * math.cos(E / 2))
+            return 2*math.atan( tan(E/2) * ((1+self.e)/(1-self.e))**0.5   )
+            #eturn 2 * math.atan2(math.sqrt(1 + self.e) * math.sin(E / 2), math.sqrt(1 - self.e) * math.cos(E / 2))
         return 2 * math.atan( math.sqrt ((1+self.e)/(self.e-1)) * tanh(E/2))
 
     def get_mean_from_time(self, period, t, t0=0):
@@ -298,12 +301,12 @@ class Orbit:
     # Use for time acceleration
     def update_angle(self,t):
         M = self.get_mean_from_t(t)
-        try:  
-            E = self.get_eccentricity_from_mean(M)
-            self.last_E = E
-        except:
+        E = self.get_eccentricity_from_mean(M)
+        if E==None:
             E = self.last_E
-            print("non convergent")
+            print("Non convergent")
+        self.last_E = E
+
         self.M0 = M
         self.t0 = t
         return E

@@ -2,6 +2,8 @@ from numpy import cos, sin, pi, tan, arccos, arctan, arcsin, cross, sinh, tanh, 
 from vector import Vector
 from orbit import Orbit
 
+
+# Store all orbit cartesian values
 class OrbitValues:
     def __init__(self, points, polar_points, perihelion, aphelion):
         self.points = points
@@ -10,6 +12,7 @@ class OrbitValues:
         self.polar_points = polar_points
         self.child = None
 
+# Use orbit object to calculate trajectories and intersection
 class OrbitProjection:
 
     def __init__(self, attractor, orbit):
@@ -31,29 +34,31 @@ class OrbitProjection:
                 r  = self.orbit.a*(1-self.orbit.e**2)/(1+self.orbit.e*cos(angle+0.0000001))
         return r
 
-           
+    # Get angle from distance intersection       
     def get_collision_angle(self,R):
         angle_collision1 = arccos( self.orbit.a*(1-self.orbit.e**2)/(R*self.orbit.e)- 1/self.orbit.e )
-        #("col",angle_collision1)
-        #angle_collision2 = acos( self.orbit.a*(1-self.orbit.e**2)/(R2*self.orbit.e)- 1/self.orbit.e )
         return (angle_collision1,-angle_collision1)
     
+    # Get time for an angle
     def get_collision_time(self,angle_collision,n):
         if angle_collision<0:
             angle_collision = 2 * pi + angle_collision 
         E = self.orbit.get_eccentric_from_true_anomaly(angle_collision)
+        
         if self.orbit.e<1:
             M = E - self.orbit.e * sin(E)
         else:
             M = self.orbit.e * sinh(E) - E
+        print(M)
         t = abs((M-self.orbit.M0)/n)
         return t
 
+    # Get cartesian coordonates for angle
     def get_position(self,angle):
         r=self._get_polar_ellipse(angle)
         return Vector(r*cos(angle),r*sin(angle),0)
 
-
+    # Manage child attractor intersection
     def intersect_child_attractor(self,attractor,r_att, v_att,r,v,t):
         orbit = Orbit()
         orbit.set_attractor(attractor)
@@ -69,7 +74,7 @@ class OrbitProjection:
         series_cartesien=[]
         escape_soi = False
         child = None
-        
+        in_child_soi = False
         if (self.orbit == None or self.orbit.a==0):
             return (series, series_cartesien)
         angle = 0
@@ -87,9 +92,7 @@ class OrbitProjection:
             angle_max = pi/3
         elif self.orbit.e>1:
             angle = -arccos(-1/self.orbit.e)
-            angle_max = -angle-0.00000001
-
-    
+            angle_max = -angle-0.00001
 
         # If we go outside the current attractor SOI
         # Calculate angle of exit and only draw points inside SOI
@@ -97,6 +100,7 @@ class OrbitProjection:
             (angle1,angle2) = self.get_collision_angle(self.attractor.soi)
             angle = min(angle1,angle2)
             angle_max = max(angle1,angle2)
+
             # Depth of only one SOI exit (would be infinite)
             if not recursive:
                 parent = self.attractor.parent
@@ -119,9 +123,11 @@ class OrbitProjection:
             angle = max(angle1,angle2)
             angle_max = 2*pi - angle
 
-        increment = max((angle_max-angle) / points, pi/100)
+        increment = min((angle_max-angle) / points, pi/200)
+        #increment = (angle_max-angle) / points
         # Calculate points
         local_increment = increment
+        
         while angle<(angle_max+local_increment) and not escape_soi:
             if angle>angle_max:
                 angle = angle_max
@@ -137,11 +143,15 @@ class OrbitProjection:
             if self.attractor==None or self.attractor.soi==0 or r <= self.attractor.soi:
                 if self.attractor.child == None or recursive:
                     series_cartesien.append(rv)
+                    if r<self.attractor.radius:
+                        escape_soi = True
                 else:
                     # Check if we cross a child attractor
+                    in_child_soi = False
                     for att in self.attractor.child:
                         # by comparing distance
                         if rv.norm()>att.r.norm()-att.soi and rv.norm()<att.r.norm()+att.soi:
+                            in_child_soi = True
                             # Get time 
                             t = self.get_collision_time(angle, n)
                             # Calculate child attractor position
@@ -158,13 +168,16 @@ class OrbitProjection:
                     series_cartesien.append(rv)
                 
             # More point when near the aphelion
-            if self.orbit.e>0.9 and self.orbit.e<1 and self.orbit.a>100000000:
-                if angle > pi/2 and angle < 3*pi/2:
-                    local_increment = increment/4
-                else:
-                    local_increment = increment*4
+            if in_child_soi:
+                local_increment = increment/20
             else:
-                local_increment = increment
+                if self.orbit.e>0.9 and self.orbit.e<1 and self.orbit.a>100000000:
+                    if angle > pi/2 and angle < 3*pi/2:
+                        local_increment = increment/4
+                    else:
+                        local_increment = increment*4
+                else:
+                    local_increment = increment
             angle+=local_increment
 
         # Transform coordonnates to ECI
@@ -174,10 +187,10 @@ class OrbitProjection:
         if self.orbit.e<1:
             if aphelion<self.attractor.soi:
                 aphelion = Vector(-aphelion,0,0)
+                aphelion = self.orbit.get_eci(aphelion)
             else:
-                aphelion = Vector(-self.attractor.soi, 0,0)
+                aphelion = None
 
-            aphelion = self.orbit.get_eci(aphelion)
              
         else:
             aphelion = None
