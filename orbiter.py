@@ -282,8 +282,9 @@ class Orbiter:
 
         if self.controller:
             self.controller.control_flight_path(self)
-        (self.r,self.v) = self.orbit.update_position(time_controller.t)
-
+        (r,v) = self.orbit.update_position(time_controller.t)
+        if (r!=None):
+            (self.r,self.v)=(r,v)
         self.check_boundaries(time_controller)
         
         self.set_attitude()

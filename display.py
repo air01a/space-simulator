@@ -324,7 +324,6 @@ class Graphics(BoxLayout):
             (orbiter_x,orbiter_y) = (0,0)
 
         (tx,ty) = translate
-
         (earth_x, earth_y) = self.center_orbit(earth_x,earth_y)
         (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x,orbiter_y)
         (moon_x, moon_y) = self.center_orbit(moon_x-tx,moon_y-ty)

@@ -45,7 +45,7 @@ class Orbit:
         self.init_eci_coeff()
 
         
-
+    # Internal trigo value store to accelerate calcul
     def init_eci_coeff(self):
         self.cos_arg_pe = cos(self.arg_pe)
         self.sin_arg_pe = sin(self.arg_pe)
@@ -171,7 +171,7 @@ class Orbit:
             return 2 * arctan( tan (f / 2) / ((1+self.e)/(1-self.e)) ** 0.5 )
         if self.e!=1:
             return 2 * arctanh( tan (f / 2) / ((self.e+1)/(self.e-1)) ** 0.5 )
-            
+
         return 0
 
     def get_eccentricity(self,r,v):
@@ -325,7 +325,7 @@ class Orbit:
             logging.debug("v %s" % str(v))
             logging.debug("----------------------------")
             return (r,v)
-        return (Vector(0,0,0),Vector(0,0,0))
+        return (None,None)
 
 # Coordonnates from ellipse reference to global axis
     def get_eci(self,v):
