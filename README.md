@@ -33,9 +33,7 @@ Manage Drag Force in atmosphere, rocket multi staging, motors parameters, flight
 
 ## In progress
 
-Take into account lift and improve drag
 
-Load spacecraft and mission control through json
 
 solar system modelisation
 

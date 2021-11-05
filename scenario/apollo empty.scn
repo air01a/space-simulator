@@ -7,7 +7,6 @@ Child=MOON
 Soi=925000000
 Radius=6378140
 
-
 [MOON]
 Name=moon
 Atmosphere=0,0,0
@@ -15,7 +14,7 @@ MU=4904042755112.52
 Picture=images/moon.png
 Soi=66100000
 Radius=1737400
-Orbit=384000000,0,3.141592653589793,3.141592653589793,0,5.1413448739820994
+Orbit=384000000,0,3.141592653589793,3.141592653589793,0,3.1413448739820994
 
 [ORBITERS]
 Name=SATURN V
@@ -24,7 +23,7 @@ Name=SATURN V
 File=rockets/saturne5.rocket
 Attractor=earth
 Position=0.0, 6378140, 0.0
-Velocity=0.0, 0.0, 0.0
+Velocity=0, 0, 0
 
 [MISSION]
-File=missions/apollo/apollo.orbit
+File=missions/apollo/apollo_test.orbit
