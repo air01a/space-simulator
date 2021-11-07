@@ -294,6 +294,7 @@ class Graphics(BoxLayout):
         else:
             self.zoom_ratio = 1 + 2 ** abs(value)
         self.adapt_zoom()
+        self.update()
 
     def set_zoom_display(self):
         if self.zoom_ratio < 1:

@@ -4,7 +4,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 import sys
-
+from kivy.config import Config
 
 
 from display import Graphics
@@ -57,6 +57,9 @@ class Filechooser(BoxLayout,Screen):
 # Main App
 class SpaceSimulatorApp(App):
     def build(self):
+        
+
+
         # If  file in sysarg
         if len(sys.argv)>1:
             file_name = sys.argv[1]
@@ -80,4 +83,8 @@ class SpaceSimulatorApp(App):
 
 # Application entry
 if __name__ == '__main__':
+    Config.set('graphics', 'fullscreen', 'auto')
+    Config.set('graphics', 'window_state', 'maximized')
+
+    Config.write()
     SpaceSimulatorApp().run()

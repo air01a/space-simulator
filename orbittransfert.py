@@ -62,7 +62,11 @@ class OrbitTransfert:
         if t < 0:
             t += self.source_orbit.get_period()
         self.t_burn = t
-        self.v_at_target = 0
+
+        v_local = (mu * (2 / perigee - 1 / self.source_orbit.a)) ** 0.5
+
+        self.v_at_target = (mu * (2 / perigee - 1 / a)) ** 0.5
+        # delta V
 
     def calculate(self, current_time):
         self.active = True
