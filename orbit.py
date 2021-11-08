@@ -102,7 +102,6 @@ class Orbit:
         # Inclination is the angle between the angular
         # momentum vector and its z component.
         i = np.arccos(h.z / h.norm())
-
         if abs(i - 0) < SMALL_NUMBER or (abs(i - pi) < SMALL_NUMBER):
             # For non-inclined orbits, raan is undefined;
             # set to zero by convention

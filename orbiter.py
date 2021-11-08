@@ -207,6 +207,12 @@ class Orbiter:
     def lock_orientation_retrograde(self):
         self.lock = "R"
 
+    def rcs_push(self, t):
+        v_direction = 0.2 * Vector(cos(self.orientation1), sin(self.orientation1), 0)
+        self.v += v_direction
+        self.set_state(self.r, self.v, t)
+        self.orbit_projection.calculate_time_series(t)
+
     def set_attitude(self):
 
         if self.lock == "R":

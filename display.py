@@ -276,6 +276,9 @@ class Graphics(BoxLayout):
         else:
             self.world.pilot.engine_off()
 
+    def rcs_push(self):
+        self.world.orbiters.get_current_orbiter().rcs_push(self.world.time_controller.t)
+
     def drop_stage(self):
         self.orbiters.separate_full_stage(self.orbiters.get_current_orbiter())
         self.engine_on(False)
