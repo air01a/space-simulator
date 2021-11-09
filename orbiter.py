@@ -81,9 +81,9 @@ class Stages:
             del self.stages[stage]
             if stage == 0:
                 if len(self.stages[stage]) > 0:
-                    for part in self.stages[stage].values():
-                        self.total_empty_mass -= part.carburant_mass
-                        self.carburant_mass += part.carburant_mass
+                    for part2 in self.stages[stage].values():
+                        self.total_empty_mass -= part2.carburant_mass
+                        self.carburant_mass += part2.carburant_mass
         return part
 
     def sep_payload(self):

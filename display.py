@@ -425,10 +425,10 @@ class Graphics(BoxLayout):
                 BLUE,
             )
 
-            display_size = round(DEFAULT_EARTH_SIZE * self.zoom_ratio * 0.27)
+            display_size = 2 * self.orbit_factor * self.zoom_ratio * 1737400
             self.moon_main_sprite.pos = (
-                int(moon_x) - display_size / 2,
-                int(moon_y) - display_size / 2,
+                (moon_x) - display_size / 2,
+                (moon_y) - display_size / 2,
             )
             self.moon_main_sprite.size = (display_size, display_size)
 
@@ -510,6 +510,9 @@ class Graphics(BoxLayout):
                                 earth_y,
                                 True,
                             )
+                    if len(orbiter2.attractor.child) == 0:
+                        orbiter2_x += orbiter2.attractor.r.x
+                        orbiter2_y += orbiter2.attractor.r.y
 
                     (orbiter2_x, orbiter2_y) = self.center_orbit(orbiter2_x, orbiter2_y)
                     self.draw_trajectory.draw_ship(orbiter2_x, orbiter2_y, None)

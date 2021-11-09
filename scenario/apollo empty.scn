@@ -26,4 +26,4 @@ Position=0.0, 6378140, 0.0
 Velocity=0, 0, 0
 
 [MISSION]
-File=missions/apollo/apollo_test.orbit
+File=missions/apollo/apollo_in_flight.orbit
