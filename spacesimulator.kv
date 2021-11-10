@@ -121,37 +121,39 @@
                 pos_hint: {"x":0, "top":1}
                 size_hint: None,None
                 size: 700,160
+                spacing: 10
                 BoxLayout:
                     orientation: 'horizontal'
                     size_hint: None,None
-                    size: 700, 80
-                    pos: 0, self.height-80
+                    size: 700, 40
+                    pos: 0, self.height-40
                     Label:
                         text: 'Engine'
-                        size: 320,80
+                        size: 320,40
                     Switch:
-                        size: 100,80
+                        size: 100,40
                         id: switch
                         on_active: root.engine_on(self.active)
                     Button: 
                         size_hint: None,None
                         text: 'Prgrde'
-                        size: 100,80
+                        size: 100,40
                         background_normal: ''
                         background_color: 0, 0.5, 0, .85
                         on_release: root.orbiter_orientation_lock('pro')
+                        pos_hint: {  'top':1}
                     Button: 
                         size_hint: None,None
                         text: 'Retgde'
-                        size: 100,80
+                        size: 100,40
                         background_normal: ''
                         background_color: 0.5, 0, 0, .85
                         on_release: root.orbiter_orientation_lock('ret')
-                    
+                        pos_hint: {  'top':1}
 
                 BoxLayout:
                     orientation: 'horizontal'
- 
+                    size: 400,50
                     Slider:
                         id: thrust
                         min: 0
@@ -159,17 +161,18 @@
                         step: 0.5
                         value: 100
                         size_hint: None,None
-                        size: 400,60
+                        size: 400,50
                         on_value: root.change_thrust(self.value)
                         orientation: 'horizontal'
                         pos_hint: {"x":0, "top":1}
                     Button: 
                         size_hint: None,None
                         text: ' RCS Push'
-                        size: 140,80
+                        size: 140,40
                         background_normal: ''
                         background_color: 0.5, 0, 0, .85
                         on_release: root.rcs_push()
+                        pos_hint: {  'top':1}
 
             RelativeLayout:
                 orientation:'horizontal'
@@ -300,15 +303,15 @@
             #size: self.width, self.height
         ColoredLabel:
             id: controlInfoLabel
-            #size_hint: .5,.1
-            size_hint: None, None
-            size: 600,100
+            size_hint: .3,.05
+            #size_hint: None, None
+            #size: 600,100
             bg_color: (0, 0, 1, 0.25)
         ColoredLabel:
             id: infoLabel
-            #size_hint: 1,.1
-            size_hint: None, None
-            size: root.width, 100
+            size_hint: 1,.05
+            #size_hint: None, None
+            #size: root.width, 100
             bg_color: 0, 1, 0, 0.25
 
 
