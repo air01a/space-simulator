@@ -36,7 +36,7 @@ class Stage_Composant:
     def thrust(self, dt):
         if self.carburant_mass > 0:
             t = dt * self.motor_flow * self.motor_speed * self.throttle
-            self.carburant_mass -= dt * self.motor_flow
+            self.carburant_mass -= dt * self.motor_flow * self.throttle
             return (t, self.carburant_mass)
         return (0, 0)
 
@@ -310,6 +310,8 @@ class Orbiter:
 
         if self.controller:
             self.controller.control_flight_path(self)
+        if self.v.norm() == 0:
+            return True
         (r, v) = self.orbit.update_position(time_controller.t)
         if r != None:
             (self.r, self.v) = (r, v)

@@ -12,6 +12,13 @@ from kivy.uix.button import Button
 import time
 from vector import Vector
 from orbittransfert import OrbitTransfert
+from kivy.core.text import Label as CoreLabel
+from constants import (
+    altitude_speeding_help,
+    max_speed_before_crash,
+    altitude_landing_help,
+)
+
 
 DEFAULT_EARTH_SIZE = 111
 BLUE = (0, 0, 1, 1)
@@ -163,12 +170,37 @@ class DrawTrajectory(Widget):
                 (x, y) = dis.center_orbit(min.x, min.y, True, earth_x, earth_y)
                 Line(points=[earth_x, earth_y, x, y])
 
-    def draw_velocity(self, x, y, x2, y2):
+    def draw_velocity(self, x, y, r, v, speed_indicator):
+        if speed_indicator and v.norm() < altitude_speeding_help:
+            reductor = 5
+        else:
+            reductor = 125
+
+        x2 = x + v.x / reductor
+        y2 = y + v.y / reductor
         with self.canvas.before:
             Color(0, 0.5, 0)
             Line(points=[x, y, x2, y2], width=4)
+            if speed_indicator:
+                if v.norm() > max_speed_before_crash:
+                    Color(1, 0, 0, 1)
+                mylabel = CoreLabel(
+                    text=str("alt: " + str(int(r)) + "\nv: " + str(round(v.norm()))),
+                    font_size=40,
+                    color=(1, 1, 1, 1),
+                )
+                mylabel.refresh()
+                # Get the texture and the texture size
+                texture = mylabel.texture
+                texture_size = list(texture.size)
+                # Draw the texture on any widget canvas
+                Rectangle(
+                    pos=(x + 5, y + 5),
+                    texture=texture,
+                    size=texture_size,
+                )
 
-    def draw_ship(self, orbiter_x, orbiter_y, orientation):
+    def draw_ship(self, orbiter_x, orbiter_y, orientation, orbiter_name=""):
 
         with self.canvas.before:
             if orientation != None:
@@ -187,6 +219,17 @@ class DrawTrajectory(Widget):
             else:
                 Color(1, 1, 0)
                 Ellipse(size=(5, 5)).pos = (orbiter_x - 2.5, orbiter_y - 2.5)
+                mylabel = CoreLabel(text=orbiter_name, font_size=25, color=(1, 1, 1, 1))
+                mylabel.refresh()
+                # Get the texture and the texture size
+                texture = mylabel.texture
+                texture_size = list(texture.size)
+                # Draw the texture on any widget canvas
+                Rectangle(
+                    pos=(orbiter_x + 5, orbiter_y + 5),
+                    texture=texture,
+                    size=texture_size,
+                )
 
 
 class Graphics(BoxLayout):
@@ -425,12 +468,9 @@ class Graphics(BoxLayout):
                 BLUE,
             )
 
-            display_size = 2 * self.orbit_factor * self.zoom_ratio * 1737400
-            self.moon_main_sprite.pos = (
-                (moon_x) - display_size / 2,
-                (moon_y) - display_size / 2,
-            )
-            self.moon_main_sprite.size = (display_size, display_size)
+            display_size = self.orbit_factor * self.zoom_ratio * 1737400
+            self.moon_main_sprite.pos = (moon_x - display_size, moon_y - display_size)
+            self.moon_main_sprite.size = (display_size * 2, display_size * 2)
 
             self.earth.x = earth_x - self.earth_diameter
             self.earth.y = earth_y - self.earth_diameter
@@ -479,12 +519,16 @@ class Graphics(BoxLayout):
                     )
 
                 # self.draw_trajectory.draw_trajectory2(self,orbiter.orbit,moon_x,moon_y)
-
+            if (orbiter.r.norm() - orbiter.attractor.radius) < altitude_landing_help:
+                speed_indicator = True
+            else:
+                speed_indicator = False
             self.draw_trajectory.draw_velocity(
                 orbiter_x,
                 orbiter_y,
-                orbiter_x + orbiter.v.x / 125,
-                orbiter_y + orbiter.v.y / 125,
+                orbiter.r.norm() - orbiter.attractor.radius,
+                orbiter.v,
+                speed_indicator,
             )
             self.draw_trajectory.draw_ship(orbiter_x, orbiter_y, orbiter.orientation1)
 
@@ -515,7 +559,9 @@ class Graphics(BoxLayout):
                         orbiter2_y += orbiter2.attractor.r.y
 
                     (orbiter2_x, orbiter2_y) = self.center_orbit(orbiter2_x, orbiter2_y)
-                    self.draw_trajectory.draw_ship(orbiter2_x, orbiter2_y, None)
+                    self.draw_trajectory.draw_ship(
+                        orbiter2_x, orbiter2_y, None, orbiter2.name
+                    )
             self.lock = False
 
         if self.goto.orbit_transfert != None:
