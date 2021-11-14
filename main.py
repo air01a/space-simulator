@@ -57,9 +57,6 @@ class Filechooser(BoxLayout,Screen):
 # Main App
 class SpaceSimulatorApp(App):
     def build(self):
-        
-
-
         # If  file in sysarg
         if len(sys.argv)>1:
             file_name = sys.argv[1]

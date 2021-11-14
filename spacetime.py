@@ -70,19 +70,15 @@ class SpaceTime:
             if orbiter.thrust:
                 thrust = True
             if self.time_controller.t_increment <= 10 or orbiter.thrust != 0:
-                landed = orbiter.update_position(
+                crashed = orbiter.update_position(
                     self.time_controller, self.time_controller.delta_t()
                 )
             else:
-                landed = orbiter.update_position_delta_t(self.time_controller)
-            if landed:
-                if orbiter.v.norm() > max_speed_before_crash:
-                    print("Orbiter Crash")
-                    self.orbiters.remove(name)
-                else:
-                    print("Orbiter Landed")
-                    orbiter.v = Vector(0, 0, 0)
-                    orbiter.r = orbiter.attractor.radius * orbiter.r / orbiter.r.norm()
+                crashed = orbiter.update_position_delta_t(self.time_controller)
+            if crashed:
+            
+                print("Orbiter Crash")
+                self.orbiters.remove(name)
 
             if thrust and self.time_controller.t_increment > 10:
                 self.time_controller.set_time_increment(10)

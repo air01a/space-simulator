@@ -186,7 +186,7 @@ class DrawTrajectory(Widget):
                     Color(1, 0, 0, 1)
                 mylabel = CoreLabel(
                     text=str("alt: " + str(int(r)) + "\nv: " + str(round(v.norm()))),
-                    font_size=40,
+                    font_size=self.police_size,
                     color=(1, 1, 1, 1),
                 )
                 mylabel.refresh()
@@ -219,7 +219,7 @@ class DrawTrajectory(Widget):
             else:
                 Color(1, 1, 0)
                 Ellipse(size=(5, 5)).pos = (orbiter_x - 2.5, orbiter_y - 2.5)
-                mylabel = CoreLabel(text=orbiter_name, font_size=25, color=(1, 1, 1, 1))
+                mylabel = CoreLabel(text=orbiter_name, font_size=self.police_size, color=(1, 1, 1, 1))
                 mylabel.refresh()
                 # Get the texture and the texture size
                 texture = mylabel.texture
@@ -272,6 +272,8 @@ class Graphics(BoxLayout):
             self.moon_main_sprite = Rectangle(source="images/moon.png")
 
         self.width, self.height = Window.size
+        self.police_size = int (self.height/800*18)
+        self.draw_trajectory.police_size = self.police_size
         self.zoom_ratio = zoom_ratio + 0.0
         self.earth_diameter = zoom_ratio * DEFAULT_EARTH_SIZE / 2
 

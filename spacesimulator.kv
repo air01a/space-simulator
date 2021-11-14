@@ -153,7 +153,7 @@
 
                 BoxLayout:
                     orientation: 'horizontal'
-                    size: 400,50
+                    size: 400,30
                     Slider:
                         id: thrust
                         min: 0
@@ -161,14 +161,14 @@
                         step: 0.5
                         value: 100
                         size_hint: None,None
-                        size: 400,50
+                        size: 400,30
                         on_value: root.change_thrust(self.value)
                         orientation: 'horizontal'
                         pos_hint: {"x":0, "top":1}
                     Button: 
                         size_hint: None,None
                         text: ' RCS Push'
-                        size: 140,40
+                        size: 140,30
                         background_normal: ''
                         background_color: 0.5, 0, 0, .85
                         on_release: root.rcs_push()
