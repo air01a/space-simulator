@@ -72,3 +72,5 @@ max_delta_t = 0.1
 max_speed_before_crash = 10
 altitude_landing_help = 10000
 altitude_speeding_help = 200
+
+default_earth_size = 111

@@ -39,6 +39,7 @@ class Scenery:
         if "Orbit" in self.config[name].keys() and parent != None:
             orbit = self.config[name]["Orbit"].split(",")
             (a, e, i, raan, arg_pe, f) = tuple(orbit)
+            attractor.parent = parent
             attractor.set_orbit_parameters(
                 parent.mu,
                 float(a),
@@ -48,7 +49,7 @@ class Scenery:
                 float(arg_pe),
                 float(f),
             )
-            print(attractor.orbit.a)
+
             attractor.update_position(0)
 
         if "Child" in self.config[name].keys():

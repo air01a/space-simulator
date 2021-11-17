@@ -1,235 +1,21 @@
 # THE UGLY part
 
-from math import e, pi, degrees, atan2, atan, log
-from kivy.graphics import *
-from kivy.uix.widget import Widget
-from kivy.uix.popup import Popup
-from kivy.core.image import Image as CoreImage
+from math import log
+from kivy.graphics import Color, Rectangle, Ellipse
 from kivy.core.window import Window
-import numpy as np
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
+
 import time
 from vector import Vector
-from orbittransfert import OrbitTransfert
-from kivy.core.text import Label as CoreLabel
 from constants import (
-    altitude_speeding_help,
-    max_speed_before_crash,
     altitude_landing_help,
+    default_earth_size,
 )
 
-
-DEFAULT_EARTH_SIZE = 111
-BLUE = (0, 0, 1, 1)
-RED = (255, 0, 0)
-GREEN = (0, 200, 0)
-BLACK = (0, 0, 0)
-ORANGE = (255, 165, 0)
-DEFAULT_EARTH_SIZE = 111
-GRAY = (105, 105, 105, 0.1)
-
-
-class Goto(Popup):
-    def __init__(self, **kwargs):
-        super(Goto, self).__init__(**kwargs)
-        self.select = 0
-        self.display = []
-        self.orbit_transfert = None
-
-    def set_world(self, world):
-        self.world = world
-
-    def on_show(self):
-        self.ids.goto_orbiter_control = self.display[self.select]
-
-    def init(self):
-        attractors = self.world.main_attractor
-        current_orbiter = self.world.orbiters.get_current_orbiter()
-        if current_orbiter.attractor.name != attractors.name:
-            self.display.append(attractors.name)
-        for att in attractors.child:
-            if current_orbiter.attractor.name != att.name:
-                self.display.append(att.name)
-        self.ids.goto_orbiter_control.text = self.display[self.select]
-
-    def on_goto_touch(self, direction):
-        self.select += direction
-        if self.select < 0:
-            self.select = len(self.display) - 1
-        if self.select > len(self.display) - 1:
-            self.select = 0
-
-    def validate(self):
-        chosen_attractor = self.display[self.select]
-        for attractor in self.world.attractors:
-            if attractor.name == chosen_attractor:
-                chosen_attractor = attractor
-                break
-        orbiter = self.world.orbiters.get_current_orbiter()
-        self.orbit_transfert = OrbitTransfert(
-            orbiter.name, orbiter.orbit, chosen_attractor.orbit, self.ids.hohmann
-        )
-        self.orbit_transfert.calculate(self.world.time_controller.t)
-        self.dismiss()
-
-    def cancel(self):
-        self.orbit_transfert = None
-        self.dismiss()
-
-
-class Compas(Button):
-    def init(self, spacetime):
-        self.prev_angle = 180
-        self.orbiters = spacetime.orbiters
-        self.angle = 180
-        self.tmp = 180
-
-    def on_touch_down(self, touch):
-        # self.size=(200,200)
-        if self.collide_point(*touch.pos):
-            y = touch.y - self.center[1]
-            x = touch.x - self.center[0]
-            calc = 0.5 * degrees(atan2(y, x))
-            self.prev_angle = calc if calc > 0 else 360 + calc
-            self.tmp = self.angle
-
-    def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos):
-            y = touch.y - self.center[1]
-            x = touch.x - self.center[0]
-            calc = 0.5 * degrees(atan2(y, x))
-            new_angle = calc if calc > 0 else 360 + calc
-
-            self.angle = (self.tmp + (new_angle - self.prev_angle)) % 360
-            self.orbiters.get_current_orbiter().change_orientation(
-                (self.angle * 2 * pi / 180 + pi / 2) % (2 * pi), 0
-            )
-            self.draw()
-
-    def on_touch_up(self, touch):
-        # Animation(angle=0).start(self)
-        self.draw()
-
-    def draw(self):
-        with self.canvas.before:
-            PushMatrix()
-            Rotate(origin=(120, Window.height - 60), angle=-self.angle - 90)
-            PopMatrix()
-
-    def repos(self):
-        self.canvas.clear()
-        self.draw()
-
-
-class DrawTrajectory(Widget):
-    def draw_soi(self, x, y, radius, color):
-        (r, g, b, a) = color
-        with self.canvas:
-            Color(r, g, b, a)
-            Line(circle=(x, y, radius), width=1)
-
-    def clear(self):
-        self.canvas.before.clear()
-        self.canvas.clear()
-
-    # Draw trajectory of orbiter
-    def draw_trajectory(
-        self, dis, orbit, orbit_values, earth_x, earth_y, secondary=False
-    ):
-
-        color_elipse = (200, 200, 200)
-        color_lines = (218, 238, 241)
-        if not orbit_values or len(orbit_values.points) < 1:
-            return
-
-        max = orbit_values.aphelion
-        min = orbit_values.perihelion
-        (x2, y2, z2) = orbit_values.points[0]
-
-        with self.canvas.before:
-            if not secondary:
-                Color(color_elipse)
-                dashed = 0
-            else:
-                Color(0, 1, 1)
-                dashed = 4
-            for (x, y, z) in orbit_values.points[1:-1]:
-                (xc, yc) = dis.center_orbit(x, y, True, earth_x, earth_y)
-                (x2, y2) = dis.center_orbit(x2, y2, True, earth_x, earth_y)
-                Line(points=[xc, yc, x2, y2], dash_offset=dashed)
-
-                (x2, y2) = (x, y)
-
-            if max != None and not secondary:
-                Color(1, 0, 0, 0.3)
-
-                (x, y) = dis.center_orbit(max.x, max.y, True, earth_x, earth_y)
-                Line(points=[earth_x, earth_y, x, y])
-
-                (x, y) = dis.center_orbit(min.x, min.y, True, earth_x, earth_y)
-                Line(points=[earth_x, earth_y, x, y])
-
-    def draw_velocity(self, x, y, r, v, speed_indicator):
-        if speed_indicator and v.norm() < altitude_speeding_help:
-            reductor = 5
-        else:
-            reductor = 125
-
-        x2 = x + v.x / reductor
-        y2 = y + v.y / reductor
-        with self.canvas.before:
-            Color(0, 0.5, 0)
-            Line(points=[x, y, x2, y2], width=4)
-            if speed_indicator:
-                if v.norm() > max_speed_before_crash:
-                    Color(1, 0, 0, 1)
-                mylabel = CoreLabel(
-                    text=str("alt: " + str(int(r)) + "\nv: " + str(round(v.norm()))),
-                    font_size=self.police_size,
-                    color=(1, 1, 1, 1),
-                )
-                mylabel.refresh()
-                # Get the texture and the texture size
-                texture = mylabel.texture
-                texture_size = list(texture.size)
-                # Draw the texture on any widget canvas
-                Rectangle(
-                    pos=(x + 5, y + 5),
-                    texture=texture,
-                    size=texture_size,
-                )
-
-    def draw_ship(self, orbiter_x, orbiter_y, orientation, orbiter_name=""):
-
-        with self.canvas.before:
-            if orientation != None:
-                Color(0, 0, 1)
-                head_x = 8 * np.cos(orientation)
-                head_y = 8 * np.sin(orientation)
-
-                Ellipse(size=(15, 15)).pos = (orbiter_x - 7.5, orbiter_y - 7.5)
-                Color(1, 0, 0)
-
-                Ellipse(size=(8, 8)).pos = (
-                    orbiter_x + head_x - 3,
-                    orbiter_y + head_y - 3,
-                )
-
-            else:
-                Color(1, 1, 0)
-                Ellipse(size=(5, 5)).pos = (orbiter_x - 2.5, orbiter_y - 2.5)
-                mylabel = CoreLabel(text=orbiter_name, font_size=self.police_size, color=(1, 1, 1, 1))
-                mylabel.refresh()
-                # Get the texture and the texture size
-                texture = mylabel.texture
-                texture_size = list(texture.size)
-                # Draw the texture on any widget canvas
-                Rectangle(
-                    pos=(orbiter_x + 5, orbiter_y + 5),
-                    texture=texture,
-                    size=texture_size,
-                )
+from graphical.ship import DrawTrajectory
+from graphical.goto import Goto
+from graphical.compas import Compas
+from graphical.attractor import DrawAttractor
 
 
 class Graphics(BoxLayout):
@@ -259,36 +45,29 @@ class Graphics(BoxLayout):
         self.orbiter_index = 0
         self.goto = None
         self.orbiters = world.orbiters
+        self.world = world
         self.ids.orbiter_control.text = self.orbiters.get_current_orbiter_name()
-        with self.canvas.before:
-            Color(0.44, 0.64, 0.94, 0.20)
-            self.earth_atmosphere = Ellipse()
-            Color(1, 1, 1, 1)
-            self.draw_trajectory = DrawTrajectory()
-            self.add_widget(self.draw_trajectory)
-            Color(1, 1, 1, 1)
-            self.ids.compas.init(world)
-            self.earth_main_sprite = Rectangle(source="images/earth.png")
-            self.moon_main_sprite = Rectangle(source="images/moon.png")
 
+        self.orbit_factor = default_earth_size / (2 * 6378140)
         self.width, self.height = Window.size
-        self.police_size = int (self.height/800*18)
-        self.draw_trajectory.police_size = self.police_size
+        self.police_size = int(self.height / 800 * 18)
         self.zoom_ratio = zoom_ratio + 0.0
-        self.earth_diameter = zoom_ratio * DEFAULT_EARTH_SIZE / 2
 
-        self.earth = Vector(0, 0, 0)
-        self.ship_centered = True
-        self.orbit_factor = DEFAULT_EARTH_SIZE / (2 * 6378140)
-        self.x_center = self.width / 2 - self.earth_diameter
-        self.y_center = self.height / 2 - self.earth_diameter
+        self.draw_attractors = DrawAttractor()
+        self.draw_attractors.init(world.main_attractor, self.orbit_factor)
+        self.draw_trajectory = DrawTrajectory()
+        self.draw_trajectory.set_ratio(self.orbit_factor)
+        self.draw_trajectory.police_size = self.police_size
+        self.add_widget(self.draw_attractors)
+        self.add_widget(self.draw_trajectory)
+        self.ids.compas.init(world)
         world.event_listener.add_key_event(
-            112, self.change_center, "Change screen center (earth vs ship)"
+            112, self.change_center, "Change screen center (attractor vs ship)"
         )
 
         world.event_listener.add_key_event(97, self.zoom_out, "Zoom out")
         world.event_listener.add_key_event(113, self.zoom_in, "Zoom in")
-        self.world = world
+
         self.world.controller.add_control_callback(self.control_info)
         self.world.pilot.control_info_callback = self.control_info
         self.world.time_controller.on_change_callback = self.set_time_slider
@@ -329,7 +108,7 @@ class Graphics(BoxLayout):
         self.engine_on(False)
 
     def adapt_zoom(self):
-        self.earth_diameter = self.zoom_ratio * DEFAULT_EARTH_SIZE / 2
+        self.earth_diameter = self.zoom_ratio * default_earth_size / 2
         self.x_center = self.width / 2 - self.earth_diameter
         self.y_center = self.height / 2 - self.earth_diameter
 
@@ -370,12 +149,12 @@ class Graphics(BoxLayout):
         self.set_zoom_display()
 
     def change_center(self):
-        self.ship_centered = not self.ship_centered
+        self.draw_attractors.change_center()
 
     def update(self, *args):
         self.width, self.height = Window.size
-        self.earth_diameter = self.zoom_ratio * DEFAULT_EARTH_SIZE / 2
-
+        self.earth_diameter = self.zoom_ratio * default_earth_size / 2
+        self.draw_attractors.set_window_size(self.width, self.height)
         self.x_center = self.width / 2 - self.earth_diameter
         self.y_center = self.height / 2 - self.earth_diameter
 
@@ -413,158 +192,54 @@ class Graphics(BoxLayout):
 
     def draw(self, dt):
         orbiters = self.world.orbiters
-        orbiter = orbiters.get_current_orbiter()
-        if orbiter == None:
-            return
-
-        (earth_x, earth_y) = (0, 0)
-        (orbiter_x, orbiter_y) = (orbiter.r.x, orbiter.r.y)
-
-        if len(orbiter.attractor.child) == 1:
-            (moon_x, moon_y) = (
-                orbiter.attractor.child[0].r.x,
-                orbiter.attractor.child[0].r.y,
-            )
-            soi = orbiter.attractor.child[0].soi
-            moon = False
-        else:
-            (moon_x, moon_y) = (orbiter.attractor.r.x, orbiter.attractor.r.y)
-            soi = orbiter.attractor.soi
-            orbiter_x += moon_x
-            orbiter_y += moon_y
-            moon = True
-        translate = (0, 0)
-
-        if self.ship_centered:
-            translate = (orbiter_x, orbiter_y)
-
-            (earth_x, earth_y) = (-orbiter_x, -orbiter_y)
-            (orbiter_x, orbiter_y) = (0, 0)
-
-        (tx, ty) = translate
-        (earth_x, earth_y) = self.center_orbit(earth_x, earth_y)
-        (orbiter_x, orbiter_y) = self.center_orbit(orbiter_x, orbiter_y)
-        (moon_x, moon_y) = self.center_orbit(moon_x - tx, moon_y - ty)
-
+        current_orbiter = orbiters.get_current_orbiter()
         self.lock = True
+        attractor_display_coordinates = self.draw_attractors.draw_attractor(
+            self.zoom_ratio, current_orbiter
+        )
         self.draw_trajectory.clear()
 
-        with self.canvas.before:
-            display_size = (6378140 + 120000) * self.orbit_factor * self.zoom_ratio
-            self.earth_atmosphere.pos = (earth_x - display_size, earth_y - display_size)
-            self.earth_atmosphere.size = (2 * display_size, 2 * display_size)
+        for orbiter_name in orbiters.get_orbiters().keys():
+            orbiter = orbiters.get_orbiter(orbiter_name)
 
-            display_size = (soi) * self.orbit_factor * self.zoom_ratio
-
-            self.draw_trajectory.draw_soi(int(moon_x), int(moon_y), display_size, BLUE)
-            self.draw_trajectory.draw_soi(
-                earth_x,
-                earth_y,
-                (384000000 - 66100000) * self.orbit_factor * self.zoom_ratio,
-                BLUE,
-            )
-            self.draw_trajectory.draw_soi(
-                earth_x,
-                earth_y,
-                (384000000 + 66100000) * self.orbit_factor * self.zoom_ratio,
-                BLUE,
+            (x, y) = attractor_display_coordinates[orbiter.attractor.name]
+            (x_orbiter, y_orbiter) = self.draw_attractors.get_ship_coordinates(
+                orbiter, self.zoom_ratio
             )
 
-            display_size = self.orbit_factor * self.zoom_ratio * 1737400
-            self.moon_main_sprite.pos = (moon_x - display_size, moon_y - display_size)
-            self.moon_main_sprite.size = (display_size * 2, display_size * 2)
-
-            self.earth.x = earth_x - self.earth_diameter
-            self.earth.y = earth_y - self.earth_diameter
-
-            self.earth_main_sprite.pos = (self.earth.x, self.earth.y)
-            self.earth_main_sprite.size = (
-                self.earth_diameter * 2,
-                self.earth_diameter * 2,
-            )
-
-            orbit_values = orbiter.orbit_projection.orbit_values
-
-            if not moon:
-                self.draw_trajectory.draw_trajectory(
-                    self, orbiter.orbit, orbit_values, earth_x, earth_y
-                )
-                if (
-                    orbiter.orbit_projection.orbit_values
-                    and orbiter.orbit_projection.orbit_values.child
-                ):
-                    self.draw_trajectory.draw_trajectory(
-                        self,
-                        orbiter.orbit_projection.orbit_values.child.orbit,
-                        orbiter.orbit_projection.orbit_values.child.orbit_values,
-                        moon_x,
-                        moon_y,
-                        True,
-                    )
-
-                # self.draw_trajectory.draw_trajectory(self,orbiter.orbit,earth_x,earth_y)
+            if current_orbiter != orbiter:
+                self.draw_trajectory.draw_ship(x_orbiter, y_orbiter, None, orbiter_name)
             else:
+
+                orbit_values = orbiter.orbit_projection.orbit_values
                 self.draw_trajectory.draw_trajectory(
-                    self, orbiter.orbit, orbit_values, moon_x, moon_y
+                    orbit_values, x, y, self.zoom_ratio
                 )
-                if (
-                    orbiter.orbit_projection.orbit_values
-                    and orbiter.orbit_projection.orbit_values.child
-                ):
+                if orbit_values and orbit_values.child != None:
+                    (x2, y2) = attractor_display_coordinates[
+                        orbit_values.child.attractor.name
+                    ]
                     self.draw_trajectory.draw_trajectory(
-                        self,
-                        orbiter.orbit_projection.orbit_values.child.orbit,
-                        orbiter.orbit_projection.orbit_values.child.orbit_values,
-                        earth_x,
-                        earth_y,
-                        True,
+                        orbit_values.child.orbit_values,
+                        x2,
+                        y2,
+                        self.zoom_ratio,
                     )
 
-                # self.draw_trajectory.draw_trajectory2(self,orbiter.orbit,moon_x,moon_y)
-            if (orbiter.r.norm() - orbiter.attractor.radius) < altitude_landing_help:
-                speed_indicator = True
-            else:
-                speed_indicator = False
-            self.draw_trajectory.draw_velocity(
-                orbiter_x,
-                orbiter_y,
-                orbiter.r.norm() - orbiter.attractor.radius,
-                orbiter.v,
-                speed_indicator,
-            )
-            self.draw_trajectory.draw_ship(orbiter_x, orbiter_y, orbiter.orientation1)
+                speed_indicator = (
+                    orbiter.r.norm() - orbiter.attractor.radius
+                ) < altitude_landing_help
 
-            for orbiter_name in orbiters.get_orbiters().keys():
-                if orbiter_name != orbiters.current_orbiter:
-
-                    orbiter2 = orbiters.get_orbiter(orbiter_name)
-                    (orbiter2_x, orbiter2_y) = (orbiter2.r.x - tx, orbiter2.r.y - ty)
-
-                    if orbiter_name == self.goto:
-                        orbit_values = orbiter2.orbit_projection.orbit_values
-
-                        if orbiter2.attractor.name == "moon":
-                            self.draw_trajectory.draw_trajectory(
-                                self, orbiter2.orbit, orbit_values, moon_x, moon_y, True
-                            )
-                        else:
-                            self.draw_trajectory.draw_trajectory(
-                                self,
-                                orbiter2.orbit,
-                                orbit_values,
-                                earth_x,
-                                earth_y,
-                                True,
-                            )
-                    if len(orbiter2.attractor.child) == 0:
-                        orbiter2_x += orbiter2.attractor.r.x
-                        orbiter2_y += orbiter2.attractor.r.y
-
-                    (orbiter2_x, orbiter2_y) = self.center_orbit(orbiter2_x, orbiter2_y)
-                    self.draw_trajectory.draw_ship(
-                        orbiter2_x, orbiter2_y, None, orbiter2.name
-                    )
-            self.lock = False
+                self.draw_trajectory.draw_velocity(
+                    x_orbiter,
+                    y_orbiter,
+                    orbiter.r.norm() - orbiter.attractor.radius,
+                    orbiter.v,
+                    speed_indicator,
+                )
+                self.draw_trajectory.draw_ship(
+                    x_orbiter, y_orbiter, orbiter.orientation1
+                )
 
         if self.goto.orbit_transfert != None:
             dt = self.goto.orbit_transfert.get_dt(self.world.time_controller.t)
@@ -573,3 +248,4 @@ class Graphics(BoxLayout):
             )
             self.ids.goto_time.text = "Time to go : " + str(int(dt))
             self.ids.goto_deltav.text = "dV : " + str(int(dv))
+        self.lock = False

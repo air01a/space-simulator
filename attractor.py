@@ -7,6 +7,7 @@ from math import atan2, sin, cos, exp
 from vector import Vector
 from orbit import Orbit
 import logging, inspect
+from orbitprojection import OrbitProjection
 
 
 class Attractor:
@@ -22,13 +23,19 @@ class Attractor:
         self.mu = mu
         self.radius = radius
         self.atmosphere_limit = 0
+        self.atmosphere_color = (0.44, 0.64, 0.94, 0.20)
         self.orbit = None
         self.picture = None
+        self.orbit_projection = None
 
     def set_orbit_parameters(self, mu, a, e, i, raan, arg_pe, f):
         self.orbit = Orbit(mu)
         self.orbit.set_elements(a, e, i, raan, arg_pe, f)
         (self.r, self.v) = self.orbit.update_position(0)
+        if self.parent:
+            print("Calculate time series", self.name)
+            self.orbit_projection = OrbitProjection(self.parent, self.orbit)
+            self.orbit_projection.calculate_time_series(0)
 
     def set_picture(self, picture):
         self.picture = picture

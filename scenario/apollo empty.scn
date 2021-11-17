@@ -22,8 +22,8 @@ Name=SATURN V
 [SATURN V]
 File=rockets/saturne5.rocket
 Attractor=earth
-Position=0.0, 6378140, 0.0
-Velocity=0, 0, 0
-
+#Position=0.0, 6378140, 0.0
+#Velocity=0, 0, 0
+Orbit=228764688.90089154,0.9714879467965849,3.141592653589793,4.6569230919655435,0,0.19079342424207021
 [MISSION]
 File=missions/apollo/apollo_in_flight.orbit
