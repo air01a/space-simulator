@@ -62,30 +62,37 @@ class DrawAttractor(Widget):
             return
         (center_x, center_y) = self.attractor_display_coordinates[attractor.parent.name]
         orbit_values = attractor.orbit_projection.orbit_values
-
         (x2, y2, z2) = orbit_values.points[0]
         x2 = self.scale(x2, zoom_ratio) + center_x
         y2 = self.scale(y2, zoom_ratio) + center_y
-        for (x, y, z) in orbit_values.points[1:-1]:
-            x = self.ratio * zoom_ratio * x + center_x
-            y = self.ratio * zoom_ratio * y + center_y
-            with self.canvas.after:
-                Color(0.32, 0.54, 0.71, 1)
+
+        with self.canvas.after:
+            (r, g, b, a) = attractor.orbit_color
+            Color(r, g, b, a)
+            for (x, y, z) in orbit_values.points[1:-1]:
+                x = self.ratio * zoom_ratio * x + center_x
+                y = self.ratio * zoom_ratio * y + center_y
                 Line(points=[x, y, x2, y2], width=0.5)
                 (x2, y2) = (x, y)
 
     def draw_attractor(self, zoom_ratio, current_orbiter):
         self.canvas.after.clear()
         self.attractor_display_coordinates = {}
-        if self.view_center == 0:
+        if self.view_center == 0 and current_orbiter != None:
             center_x = current_orbiter.r.x + current_orbiter.attractor.r.x
             center_y = current_orbiter.r.y + current_orbiter.attractor.r.y
-        else:
+        elif current_orbiter != None:
             center_x = current_orbiter.attractor.r.x
             center_y = current_orbiter.attractor.r.y
+        else:
+            center_x = 0
+            center_y = 0
+
         for att in self.attractor:
             self.draw_orbit(att["obj"], zoom_ratio)
             r = att["size"] * zoom_ratio * self.ratio
+            if r < 10:
+                r = 10
             x = (att["obj"].r.x - center_x) * zoom_ratio * self.ratio + self.size_x
             y = (att["obj"].r.y - center_y) * zoom_ratio * self.ratio + self.size_y
 

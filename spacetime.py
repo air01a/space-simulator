@@ -49,6 +49,8 @@ class SpaceTime:
         scene = Scenery(file_name)
         self.main_attractor = scene.read_attractor("MAIN")
 
+        self.zoom = scene.read_zoom()
+
         self.time_controller = TimeController(1, self.event_listener, 0)
         self.orbiters = scene.read_orbiters(self.time_controller)
 
@@ -76,7 +78,7 @@ class SpaceTime:
             else:
                 crashed = orbiter.update_position_delta_t(self.time_controller)
             if crashed:
-            
+
                 print("Orbiter Crash")
                 self.orbiters.remove(name)
 

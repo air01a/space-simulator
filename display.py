@@ -39,19 +39,21 @@ class Graphics(BoxLayout):
     def drop_payload(self):
         self.world.pilot.drop_payload()
 
-    def init(self, world, zoom_ratio=1):
+    def init(self, world):
 
         self.lock = False
         self.orbiter_index = 0
         self.goto = None
         self.orbiters = world.orbiters
         self.world = world
-        self.ids.orbiter_control.text = self.orbiters.get_current_orbiter_name()
+        orbiter_name = self.orbiters.get_current_orbiter_name()
+        if not orbiter_name:
+            orbiter_name = "None"
+        self.ids.orbiter_control.text = orbiter_name
 
         self.orbit_factor = default_earth_size / (2 * 6378140)
         self.width, self.height = Window.size
         self.police_size = int(self.height / 800 * 18)
-        self.zoom_ratio = zoom_ratio + 0.0
 
         self.draw_attractors = DrawAttractor()
         self.draw_attractors.init(world.main_attractor, self.orbit_factor)
@@ -71,9 +73,15 @@ class Graphics(BoxLayout):
         self.world.controller.add_control_callback(self.control_info)
         self.world.pilot.control_info_callback = self.control_info
         self.world.time_controller.on_change_callback = self.set_time_slider
-        self.set_zoom_display()
+
         self.goto = Goto()
         self.goto.set_world(world)
+        if self.world.zoom:
+            zoom_ratio = self.world.zoom
+        else:
+            zoom_ratio = 50
+        self.zoom_ratio = zoom_ratio + 0.0
+        self.set_zoom_display()
 
     def orbiter_orientation_lock(self, lock):
         if lock == "pro":

@@ -52,6 +52,10 @@ class Scenery:
 
             attractor.update_position(0)
 
+        if "OrbitColor" in self.config[name].keys():
+            [r, g, b, a] = self.config[name]["OrbitColor"].split(",")
+            attractor.orbit_color = (r, g, b, a)
+
         if "Child" in self.config[name].keys():
             for child in self.config[name]["Child"].split(","):
                 attractor.add_child(self.read_attractor(child, attractor))
@@ -62,7 +66,9 @@ class Scenery:
     # Read orbiters config
     def read_orbiters(self, time_controller):
         orbiters = Orbiters(time_controller)
-
+        if not ("ORBITERS" in self.config.keys()):
+            self.orbiters = orbiters
+            return orbiters
         for orbiters_name in self.config["ORBITERS"]["Name"].split(","):
             orbiter_param = self.config[orbiters_name]
             file = orbiter_param["File"]
@@ -100,6 +106,12 @@ class Scenery:
         if "MISSION" in self.config.keys():
             mission = self.config["MISSION"]["File"]
             return Controller(mission, self.orbiters, time_controller)
+
+    def read_zoom(self):
+        if "ZOOM" in self.config.keys():
+            zoom = int(self.config["ZOOM"]["Value"])
+            return zoom
+        return None
 
     def __init__(self, file_name):
         self.config = configparser.ConfigParser()

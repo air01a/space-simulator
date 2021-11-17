@@ -27,13 +27,13 @@ class Attractor:
         self.orbit = None
         self.picture = None
         self.orbit_projection = None
+        self.orbit_color = (1, 1, 1, 1)
 
     def set_orbit_parameters(self, mu, a, e, i, raan, arg_pe, f):
         self.orbit = Orbit(mu)
         self.orbit.set_elements(a, e, i, raan, arg_pe, f)
         (self.r, self.v) = self.orbit.update_position(0)
         if self.parent:
-            print("Calculate time series", self.name)
             self.orbit_projection = OrbitProjection(self.parent, self.orbit)
             self.orbit_projection.calculate_time_series(0)
 
