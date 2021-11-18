@@ -1,13 +1,15 @@
 # space-simulator : Rocket simulator
-Python satellite simulator using newton &amp; kepler
-
 Python satellite simulator using kepler laws & newton (2D).
 
 You can pilote the orbiter (orient, start/stop engine), see in real time the orbit transformation, and initiate atmosphere reentry.
 Arrow left and right to orient the spacecraft, upper arrow to start engine, down arrow to stop, W,X,C to accelerate/slow down time and A&Q to zoom / unzoom.
 
 Final goal is to be able to start a rocket from earth and go to the moon.
+You can define your rocket multi stages parameters in a config file (see examples in rockets directory), define the environnement in the scenery directory (which planets and satellites, position) and customize auto pilot in the missions directory. 
 
+This simulator is based on patched conic approximation (planets have a sphere of influence, and spacecraft are attracted by only one planet at a time), uses kepler equations (time propagation and display orbit), newton laws, delta v for motion, ...
+
+As it is based on Sphere of influence, it only give a an approximation of the real trajectories.
 
 ## Curent working features
 
