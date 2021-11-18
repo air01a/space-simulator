@@ -29,17 +29,13 @@ Propagate Kepler time equation to accelerate time
 
 ![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/kepler_propagation.gif)
 
+Simulate full solar system
+
+![](https://raw.githubusercontent.com/air01a/space-simulator/main/screenshots/fullsolarsystem.png)
+
 Manage Drag Force in atmosphere, rocket multi staging, motors parameters, flight management (attitude change with altitude, speed, or perihelion/aphelion), change attractor (moon / earth).
 
 ## In progress
-
-
-
-solar system modelisation
-
-Hohmann transfer calculator
-
-Graphic improvment (not a priority)
 
 Organize and optimize code (at the beginning, this was just a small test to understand kepler equations)
 

@@ -39,6 +39,17 @@ class Graphics(BoxLayout):
     def drop_payload(self):
         self.world.pilot.drop_payload()
 
+    def init_zoom(self):
+        if self.world.zoom:
+            self.change_zoom(self.world.zoom)
+        else:
+            self.zoom_ratio = 50
+        if self.world.zoom_min:
+            self.ids.zoom.min = self.world.zoom_min
+        if self.world.zoom_max:
+            self.ids.zoom.max = self.world.zoom_max
+        self.set_zoom_display()
+
     def init(self, world):
 
         self.lock = False
@@ -70,18 +81,14 @@ class Graphics(BoxLayout):
         world.event_listener.add_key_event(97, self.zoom_out, "Zoom out")
         world.event_listener.add_key_event(113, self.zoom_in, "Zoom in")
 
-        self.world.controller.add_control_callback(self.control_info)
-        self.world.pilot.control_info_callback = self.control_info
+        if self.world.controller:
+            self.world.controller.add_control_callback(self.control_info)
+            self.world.pilot.control_info_callback = self.control_info
         self.world.time_controller.on_change_callback = self.set_time_slider
 
         self.goto = Goto()
         self.goto.set_world(world)
-        if self.world.zoom:
-            zoom_ratio = self.world.zoom
-        else:
-            zoom_ratio = 50
-        self.zoom_ratio = zoom_ratio + 0.0
-        self.set_zoom_display()
+        self.init_zoom()
 
     def orbiter_orientation_lock(self, lock):
         if lock == "pro":
@@ -228,10 +235,7 @@ class Graphics(BoxLayout):
                         orbit_values.child.attractor.name
                     ]
                     self.draw_trajectory.draw_trajectory(
-                        orbit_values.child.orbit_values,
-                        x2,
-                        y2,
-                        self.zoom_ratio,
+                        orbit_values.child.orbit_values, x2, y2, self.zoom_ratio, True
                     )
 
                 speed_indicator = (

@@ -5,8 +5,6 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 import sys
 from kivy.config import Config
-
-
 from display import Graphics
 from spacetime import SpaceTime
 
@@ -23,7 +21,8 @@ class MainWindow(BoxLayout, Screen):
 
         event = Clock.schedule_interval(self.space_time.update, 1 / 60.0)
         display = Clock.schedule_interval(self.graphics.draw, 1 / 24.0)
-        info = Clock.schedule_interval(self.show_info, 1 / 10.0)
+        if self.space_time.controller:
+            info = Clock.schedule_interval(self.show_info, 1 / 10.0)
         Window.bind(size=self.resize)
 
     def show_info(self, ft):

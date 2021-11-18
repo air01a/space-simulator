@@ -89,12 +89,20 @@ class DrawAttractor(Widget):
             center_y = 0
 
         for att in self.attractor:
-            self.draw_orbit(att["obj"], zoom_ratio)
+            obj = att["obj"]
+            self.draw_orbit(obj, zoom_ratio)
             r = att["size"] * zoom_ratio * self.ratio
-            if r < 10:
-                r = 10
-            x = (att["obj"].r.x - center_x) * zoom_ratio * self.ratio + self.size_x
-            y = (att["obj"].r.y - center_y) * zoom_ratio * self.ratio + self.size_y
+            if r < obj.min_size:
+                r = obj.min_size
+
+            if obj.parent:
+                px = obj.parent.r.x
+                py = obj.parent.r.y
+            else:
+                px = 0
+                py = 0
+            x = (obj.r.x + px - center_x) * zoom_ratio * self.ratio + self.size_x
+            y = (obj.r.y + py - center_y) * zoom_ratio * self.ratio + self.size_y
 
             self.attractor_display_coordinates[att["name"]] = (x, y)
             x -= r

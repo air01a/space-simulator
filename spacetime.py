@@ -49,7 +49,7 @@ class SpaceTime:
         scene = Scenery(file_name)
         self.main_attractor = scene.read_attractor("MAIN")
 
-        self.zoom = scene.read_zoom()
+        (self.zoom, self.zoom_min, self.zoom_max) = scene.read_zoom()
 
         self.time_controller = TimeController(1, self.event_listener, 0)
         self.orbiters = scene.read_orbiters(self.time_controller)
@@ -86,5 +86,4 @@ class SpaceTime:
                 self.time_controller.set_time_increment(10)
 
         self.main_attractor.update_position(self.time_controller.t)
-        # print(self.time_controller.t, self.main_attractor.child[0].r)
         self.time_controller.update_time()

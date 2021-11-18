@@ -52,6 +52,10 @@ class Scenery:
 
             attractor.update_position(0)
 
+        if "MinSize" in self.config[name].keys():
+            min_size = int(self.config[name]["MinSize"])
+            attractor.min_size = min_size
+
         if "OrbitColor" in self.config[name].keys():
             [r, g, b, a] = self.config[name]["OrbitColor"].split(",")
             attractor.orbit_color = (r, g, b, a)
@@ -110,8 +114,14 @@ class Scenery:
     def read_zoom(self):
         if "ZOOM" in self.config.keys():
             zoom = int(self.config["ZOOM"]["Value"])
-            return zoom
-        return None
+            min = max = None
+            if "Min" in self.config["ZOOM"].keys():
+                min = int(self.config["ZOOM"]["Min"])
+            if "Max" in self.config["ZOOM"].keys():
+                max = int(self.config["ZOOM"]["Max"])
+
+            return (zoom, min, max)
+        return (None, None, None)
 
     def __init__(self, file_name):
         self.config = configparser.ConfigParser()

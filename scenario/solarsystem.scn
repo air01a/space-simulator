@@ -1,5 +1,7 @@
 [ZOOM]
-Value = 120
+Value=120
+Min=50
+Max=140
 
 [MAIN]
 Name=sun
@@ -9,6 +11,7 @@ Picture=images/sun.png
 Child=MERCURY,VENUS,EARTH,MARS,JUPITER,SATURN,URANUS,NEPTUNE
 Radius=696340000
 Soi=0
+MinSize=10
 
 
 [MERCURY]
@@ -20,6 +23,7 @@ Radius=2439700
 Orbit=57909175670,0.21,0.12,0.84,1.35,4.402607699
 OrbitColor=0.5,0.5,0.5,1
 Soi=0
+MinSize=10
 
 [VENUS]
 Name=venus
@@ -28,29 +32,32 @@ MU=324859000000000
 Picture=images/venus.png
 Radius=6051800
 Orbit=108208925510,0.01,0.06,1.34,2.30,3.17614546
-OrbitColor=0.5,0.5,0.5,1
+OrbitColor=1,0.9,0,1
 Soi=0
+MinSize=10
 
 [EARTH]
 Name=earth
 Atmosphere=1.39,7900,120000
 MU=3.986004415e14
 Picture=images/earth.png
-#Child=MOON
+Child=MOON
 Soi=0
 Radius=6378140
 Orbit=149597887150,0.02,0,-0.2,1.80,1.753433688
 OrbitColor=0,0,1,1
+MinSize=10
 
-#[MOON]
-#Name=moon
-#Atmosphere=0,0,0
-#MU=4904042755112.52
-#Picture=images/moon.png
-#Soi=66100000
-#Radius=1737400
-#Orbit=384000000,0,3.141592653589793,3.141592653589793,0,3.80213448739820994
-#OrbitColor=1,1,1,0.5
+[MOON]
+Name=moon
+Atmosphere=0,0,0
+MU=4904042755112.52
+Picture=images/moon.png
+Soi=66100000
+Radius=1737400
+Orbit=384000000,0,3.141592653589793,3.141592653589793,0,3.80213448739820994
+OrbitColor=1,1,1,0.5
+MinSize=4
 
 [MARS]
 Name=mars
@@ -61,6 +68,8 @@ Soi=0
 Radius=3389500
 Orbit=227936637230,0.09,0.03,0.87,5.87,6.203830771
 OrbitColor=1,0,0,1
+MinSize=10
+
 
 [JUPITER]
 Name=jupiter
@@ -70,7 +79,8 @@ Picture=images/jupiter.png
 Soi=0
 Radius=69911000
 Orbit=778412026730,0.05,0.02,1.76,0.26,0.6004697081
-OrbitColor=1,0,0,1
+OrbitColor=0.79,0.56,0.22,1
+MinSize=10
 
 [SATURN]
 Name=saturn
@@ -80,7 +90,8 @@ Picture=images/saturn.png
 Soi=0
 Radius=58232000
 Orbit=1426725412500,0.05,0.04,1.98,1.61,0.8716928267
-OrbitColor=1,0,0,1
+OrbitColor=0.89,0.86,0.8,1
+MinSize=10
 
 [URANUS]
 Name=uranus
@@ -90,7 +101,8 @@ Picture=images/uranus.png
 Soi=0
 Radius=25362000
 Orbit=2870972219800,0.05,0.01,1.30,2.98,5.466932864
-OrbitColor=1,0,0,1
+OrbitColor=0.73,0.88,0.89,1
+MinSize=10
 
 [NEPTUNE]
 Name=neptune
@@ -100,8 +112,6 @@ Picture=images/neptune.png
 Soi=0
 Radius=24622000
 Orbit=4498252910490,0.01,0.03,2.30,0.78,5.321160347
-OrbitColor=1,1,1,1
+OrbitColor=0.36,0.36,0.87,1
+MinSize=10
 
-
-[MISSION]
-File=missions/apollo/apollo_in_flight.orbit

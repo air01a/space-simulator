@@ -29,6 +29,8 @@ class Attractor:
         self.orbit_projection = None
         self.orbit_color = (1, 1, 1, 1)
 
+        self.min_size = 0
+
     def set_orbit_parameters(self, mu, a, e, i, raan, arg_pe, f):
         self.orbit = Orbit(mu)
         self.orbit.set_elements(a, e, i, raan, arg_pe, f)
