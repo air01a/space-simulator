@@ -103,10 +103,12 @@
  
 
 <Graphics> 
+
     BoxLayout:
         orientation: 'vertical'
        # size_hint: 1,1
-
+        FloatLayout:
+            id: dynamics
         BoxLayout:
             orientation:'horizontal'
             size_hint: None, None
@@ -173,6 +175,7 @@
                         background_color: 0.5, 0, 0, .85
                         on_release: root.rcs_push()
                         pos_hint: {  'top':1}
+            
 
             RelativeLayout:
                 orientation:'horizontal'

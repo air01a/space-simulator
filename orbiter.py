@@ -9,6 +9,7 @@ import logging, inspect
 from constants import max_delta_t
 import configparser
 from orbitprojection import OrbitProjection
+from constants import rcs_push_delta_v
 
 ########################################
 # Define a composant of a stage
@@ -150,6 +151,7 @@ class Orbiter:
         self.name = name
         self.lock = None
         self.control_info_callback = None
+        self.rcs = True
 
     def start_engine(self):
         self.thrust = 1
@@ -207,11 +209,8 @@ class Orbiter:
     def lock_orientation_retrograde(self):
         self.lock = "R"
 
-    def rcs_push(self, t):
-        v_direction = 0.2 * Vector(cos(self.orientation1), sin(self.orientation1), 0)
-        self.v += v_direction
-        self.set_state(self.r, self.v, t)
-        self.orbit_projection.calculate_time_series(t)
+    def rcs_push(self):
+        self.rcs = True
 
     def set_attitude(self):
 
@@ -239,7 +238,7 @@ class Orbiter:
         # Iterate delta_t
         for dt in delta_t_array:
             # If motors are on, calculate dv
-            if self.thrust:
+            if self.thrust or self.rcs:
                 dv = self.delta_v(t, dt)
             else:
                 dv = None
@@ -327,11 +326,15 @@ class Orbiter:
     def delta_v(self, t, dt):
 
         v_direction = Vector(cos(self.orientation1), sin(self.orientation1), 0)
-
-        mass = self.stages.get_total_mass()
-        thrust = self.stages.get_thrust(dt)
-        self.thrust = thrust / (1000 * dt)
-        self.dv = v_direction * thrust / mass
+        self.dv = Vector(0, 0, 0)
+        if self.rcs:
+            self.dv = rcs_push_delta_v * v_direction
+            self.rcs = 0
+        if self.thrust:
+            mass = self.stages.get_total_mass()
+            thrust = self.stages.get_thrust(dt)
+            self.thrust = thrust / (1000 * dt)
+            self.dv += v_direction * thrust / mass
         return self.dv
 
     def display_info(self, t):

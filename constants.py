@@ -74,3 +74,5 @@ altitude_landing_help = 10000
 altitude_speeding_help = 200
 
 default_earth_size = 111
+
+rcs_push_delta_v = 0.2

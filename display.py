@@ -71,8 +71,8 @@ class Graphics(BoxLayout):
         self.draw_trajectory = DrawTrajectory()
         self.draw_trajectory.set_ratio(self.orbit_factor)
         self.draw_trajectory.police_size = self.police_size
-        self.add_widget(self.draw_attractors)
-        self.add_widget(self.draw_trajectory)
+        self.ids.dynamics.add_widget(self.draw_attractors)
+        self.ids.dynamics.add_widget(self.draw_trajectory)
         self.ids.compas.init(world)
         world.event_listener.add_key_event(
             112, self.change_center, "Change screen center (attractor vs ship)"
@@ -116,7 +116,7 @@ class Graphics(BoxLayout):
             self.world.pilot.engine_off()
 
     def rcs_push(self):
-        self.world.orbiters.get_current_orbiter().rcs_push(self.world.time_controller.t)
+        self.world.orbiters.get_current_orbiter().rcs_push()
 
     def drop_stage(self):
         self.orbiters.separate_full_stage(self.orbiters.get_current_orbiter())

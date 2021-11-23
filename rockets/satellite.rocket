@@ -1,0 +1,5 @@
+[param]
+name = Satellite
+
+[stage1]
+payload=20,3000,4000,5500,0
