@@ -127,19 +127,19 @@
                 BoxLayout:
                     orientation: 'horizontal'
                     size_hint: None,None
-                    size: 700, 40
+                    size: 700, 20
                     pos: 0, self.height-40
                     Label:
                         text: 'Engine'
-                        size: 320,40
+                        size: 320,20
                     Switch:
-                        size: 100,40
+                        size: 100,20
                         id: switch
                         on_active: root.engine_on(self.active)
                     Button: 
                         size_hint: None,None
                         text: 'Prgrde'
-                        size: 100,40
+                        size: 100,20
                         background_normal: ''
                         background_color: 0, 0.5, 0, .85
                         on_release: root.orbiter_orientation_lock('pro')
@@ -147,7 +147,7 @@
                     Button: 
                         size_hint: None,None
                         text: 'Retgde'
-                        size: 100,40
+                        size: 100,20
                         background_normal: ''
                         background_color: 0.5, 0, 0, .85
                         on_release: root.orbiter_orientation_lock('ret')
@@ -155,7 +155,7 @@
 
                 BoxLayout:
                     orientation: 'horizontal'
-                    size: 500,30
+                    size: 500,20
                     spacing: 10
                     Slider:
                         id: thrust
@@ -164,14 +164,14 @@
                         step: 0.5
                         value: 100
                         size_hint: None,None
-                        size: 400,30
+                        size: 400,20
                         on_value: root.change_thrust(self.value)
                         orientation: 'horizontal'
                         pos_hint: { "top":1}
                     Button: 
                         size_hint: None,None
                         text: ' RCS Push'
-                        size: 140,30
+                        size: 140,20
                         background_normal: ''
                         background_color: 0.5, 0, 0, .85
                         on_release: root.rcs_push()
@@ -182,16 +182,16 @@
                 orientation:'horizontal'
                 BoxLayout:
                     orientation: 'vertical'
-                    size: 500,350
+                    size: 500,250
                     pos_hint: { 'right': 1, 'top':1}
                     size_hint: None, None
                     BoxLayout:
                         orientation:'horizontal'
                         size_hint: None, None
-                        size: 500,80
+                        size: 500,50
                         pos_hint: { 'right': 1, 'top':1}
                         Label:
-                            size: 200,80
+                            size: 200,50
                             text: 'Time Factor'
                             pos_hint: { 'right': 1, 'top':1}
                         Slider:
@@ -200,7 +200,7 @@
                             max:100
                             step:1
                             value:1
-                            size: 300,80
+                            size: 300,50
                             size_hint: None, None
                             pos_hint: { 'right': 1, 'top':1}
                             orientation: 'horizontal'
@@ -208,10 +208,10 @@
                     BoxLayout:
                         orientation:'horizontal'
                         size_hint: None, None
-                        size: 500,80
+                        size: 500,50
                         pos_hint: { 'right': 1, 'top':1}
                         Label:
-                            size: 200,80
+                            size: 200,50
                             text: 'Zoom Factor'
                             pos_hint: { 'right': 1, 'top':1}
                         Slider:
@@ -220,7 +220,7 @@
                             max:125
                             step:1
                             value:1
-                            size: 300,80
+                            size: 300,50
                             size_hint: None, None
                             pos_hint: { 'right': 1, 'top':1}
                             orientation: 'horizontal'
@@ -228,12 +228,12 @@
                     BoxLayout:
                         orientation:'vertical'
                         size_hint: None,None
-                        size: 300,160
+                        size: 300,120
                         pos_hint: { 'right': 1, 'top':1}
                         Button: 
                             size_hint: None,None
                             text: 'GoTo'
-                            size: 200,30
+                            size: 200,20
                             background_normal: ''
                             background_color: 0.2, 0.2, 0.5, .85
                             on_release: root.goto.open()
@@ -242,25 +242,25 @@
                             halign: 'left'
                             id: goto_time
                             text: ''
-                            size: 300,30
+                            size: 300,20
                         Label:
                             size_hint: None,None
                             halign: 'left'
                             id: goto_deltav
                             text: ''
-                            size: 300,30
+                            size: 300,20
                         Label:
                             size_hint: None,None
                             halign: 'left'
                             id: goto_deltavtarget
                             text: ''
-                            size: 300,30
+                            size: 300,20
                         Label:
                             size_hint: None,None
                             halign: 'left'
                             id: goto_distance
                             text: ''
-                            size: 300,30
+                            size: 300,20
                             
 
 
@@ -270,7 +270,7 @@
             Button: 
                 size_hint: None,None
                 text: '<'
-                size: 20,30
+                size: 20,20
                 on_press: root.on_orbiter_touch(-1)
                 background_normal: ''
                 background_color: 1, .3, .4, .85
@@ -278,11 +278,11 @@
                 id: orbiter_control
                 text : 'orbiter'
                 size_hint: None,None
-                size: 200,30
+                size: 100,20
             Button: 
                 size_hint: None,None
                 text: '>'
-                size: 20,30
+                size: 20,20
                 on_press: root.on_orbiter_touch(1)
                 background_normal: ''
                 background_color: 1, .3, .4, .85
@@ -290,14 +290,14 @@
             Button: 
                 size_hint: None,None
                 text: 'Control'
-                size: 100,30
+                size: 100,20
                 on_press: root.change_orbiter()
                 background_normal: ''
                 background_color: 0.5, 0.5, 0.5, .85
             Button:
                 size_hint: None,None
                 text: 'drop stage'
-                size: 180,30
+                size: 100,20
                 background_normal: ''
                 background_color: 0.4, 0.2, 0.5, .85
                 on_press: root.drop_stage()
@@ -305,7 +305,7 @@
                 size_hint: None,None
                 id: dock
                 text: 'Dock'
-                size: 180,30
+                size: 100,20
                 background_normal: ''
                 background_color: 0.4, 0.2, 0.2, .85
                 on_press: root.dock()
@@ -323,7 +323,7 @@
         Graphics:
             id: graphics
 
-            size_hint: 1, 0.8
+            size_hint: 1, 0.9
             pos:self.pos
             #size: self.width, self.height
         ColoredLabel:

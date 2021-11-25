@@ -7,6 +7,7 @@ import sys
 from kivy.config import Config
 from display import Graphics
 from spacetime import SpaceTime
+from win32api import GetSystemMetrics
 
 # Main Window, display graphics & co
 class MainWindow(BoxLayout, Screen):
@@ -77,8 +78,9 @@ class SpaceSimulatorApp(App):
 
 # Application entry
 if __name__ == "__main__":
-    Config.set("graphics", "fullscreen", "auto")
+    Config.set("graphics", "fullscreen", 0)
     Config.set("graphics", "window_state", "maximized")
-
+    Config.set('graphics', 'resizable', 1)
+ 
     Config.write()
     SpaceSimulatorApp().run()
