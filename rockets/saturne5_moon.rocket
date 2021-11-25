@@ -1,12 +1,14 @@
 [param]
-name=Saturn V
+name=LEM
+dockable=True
 
 [stage1]
 CSM=32,2800,8500,6300,30
 
 [stage2]
-LEM=16,2800,2792,14000,0
+LEM_Descent=32,2800,2000,10000,0
 
-
+[stage3]
+LEM_Ascent=32,2800,2000,2500,0
 
 

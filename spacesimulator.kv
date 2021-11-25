@@ -120,7 +120,7 @@
                 pos_hint: {"x":0, "top":1}
             BoxLayout:
                 orientation: 'vertical'
-                pos_hint: {"x":0, "top":1}
+                pos_hint: {"x":0.1, "top":1}
                 size_hint: None,None
                 size: 700,160
                 spacing: 10
@@ -155,7 +155,8 @@
 
                 BoxLayout:
                     orientation: 'horizontal'
-                    size: 400,30
+                    size: 500,30
+                    spacing: 10
                     Slider:
                         id: thrust
                         min: 0
@@ -166,7 +167,7 @@
                         size: 400,30
                         on_value: root.change_thrust(self.value)
                         orientation: 'horizontal'
-                        pos_hint: {"x":0, "top":1}
+                        pos_hint: { "top":1}
                     Button: 
                         size_hint: None,None
                         text: ' RCS Push'
@@ -300,6 +301,15 @@
                 background_normal: ''
                 background_color: 0.4, 0.2, 0.5, .85
                 on_press: root.drop_stage()
+            Button:
+                size_hint: None,None
+                id: dock
+                text: 'Dock'
+                size: 180,30
+                background_normal: ''
+                background_color: 0.4, 0.2, 0.2, .85
+                on_press: root.dock()
+                opacity: 0
                 
 <MainWindow>
     canvas.before:

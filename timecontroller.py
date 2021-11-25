@@ -104,8 +104,10 @@ class TimeController:
 
     def set_time_increment(self, increment):
         self.t_increment = increment
-        if self.on_change_callback != None:
-            self.on_change_callback(self.t_increment)
+        if len(self.on_change_callback) != 0:
+            for func in self.on_change_callback:
+                func()
+            # self.on_change_callback(self.t_increment)
 
     def __init__(self, t0, event_listener, t_increment=0):
         self.event_listener = event_listener

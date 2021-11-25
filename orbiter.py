@@ -152,11 +152,14 @@ class Orbiter:
         self.lock = None
         self.control_info_callback = None
         self.rcs = True
+        self.dockable = False
+        self.engine_on = False
 
     def start_engine(self):
-        self.thrust = 1
+        self.engine_on = True
 
     def stop_engine(self):
+        self.engine_on = False
         self.thrust = 0
 
     def drop_stage(self):
@@ -238,7 +241,7 @@ class Orbiter:
         # Iterate delta_t
         for dt in delta_t_array:
             # If motors are on, calculate dv
-            if self.thrust or self.rcs:
+            if self.engine_on or self.rcs:
                 dv = self.delta_v(t, dt)
             else:
                 dv = None
@@ -330,7 +333,7 @@ class Orbiter:
         if self.rcs:
             self.dv = rcs_push_delta_v * v_direction
             self.rcs = 0
-        if self.thrust:
+        if self.engine_on:
             mass = self.stages.get_total_mass()
             thrust = self.stages.get_thrust(dt)
             self.thrust = thrust / (1000 * dt)
@@ -413,7 +416,16 @@ class Orbiters:
                 if self.current_orbiter == None and len(self.orbiters) > 0:
                     self.current_orbiter = list(self.orbiters.keys())[0]
 
-    def separate_stage(self, orbiter, part_name, thrust=0):
+    def dock(self, ship1_name, ship2_name):
+        ship1 = self.get_orbiter(ship1_name)
+        ship2 = self.get_orbiter(ship2_name)
+        for stage in ship2.stages.stages:
+            ship1.stages.add_stage()
+            for part_name in stage.keys():
+                ship1.stages.add_part(part_name, stage[part_name])
+            self.remove(ship2_name)
+
+    def separate_stage(self, orbiter, part_name, thrust=False):
         if part_name in orbiter.stages.empty_part:
             orbiter.stages.empty_part.pop(orbiter.stage.empty_part.index(part_name))
         if part_name == "payload":
@@ -427,11 +439,13 @@ class Orbiters:
         stages.add_part(part_name, part)
 
         new_orbiter = Orbiter(part_name, stages)
+        new_orbiter.dockable = orbiter.dockable
         new_orbiter.set_attractor(orbiter.attractor)
         self.add_orbiter(part_name, new_orbiter)
         new_orbiter.set_state(orbiter.r, orbiter.v, self.time.t)
         new_orbiter.orbit_projection.calculate_time_series(self.time.t)
-        orbiter.thrust = thrust
+        orbiter.engine_on = thrust
+
         print("############# Stage Separation ##############")
         print(part)
         print("#############################################")
@@ -439,6 +453,7 @@ class Orbiters:
     def separate_full_stage(self, orbiter):
         for part in list(orbiter.stages.stages[0].keys()):
             self.separate_stage(orbiter, part)
+            self.apply_remove()
 
 
 ########################################
@@ -454,6 +469,11 @@ class Load_Orbiters:
         finish = False
         stage = 0
         name = config["param"]["name"]
+        dockable = False
+        if "dockable" in config["param"].keys():
+            value = config["param"]["Dockable"]
+            if value == "1" or value.lower() == "true":
+                dockable = True
         stages = Stages()
 
         while not finish:
@@ -491,4 +511,5 @@ class Load_Orbiters:
             else:
                 finish = True
         orbiter = Orbiter(name, stages)
+        orbiter.dockable = dockable
         return (name, orbiter)

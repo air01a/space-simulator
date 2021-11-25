@@ -16,6 +16,7 @@ from graphical.ship import DrawTrajectory
 from graphical.goto import Goto
 from graphical.compas import Compas
 from graphical.attractor import DrawAttractor
+from orbiter import Orbiter
 
 
 class Graphics(BoxLayout):
@@ -209,6 +210,24 @@ class Graphics(BoxLayout):
 
         return (x, y)
 
+    def dock(self):
+        if self.ids.dock.opacity == 0:
+            return
+
+        orbiters = self.world.orbiters
+        current_orbiter = orbiters.get_current_orbiter()
+
+        distance = int(self.goto.orbit_transfert.get_current_distance())
+        if (
+            distance < 10000
+            and current_orbiter.dockable
+            and isinstance(self.goto.orbit_transfert.target, Orbiter)
+            and self.goto.orbit_transfert.target.dockable
+        ):
+            orbiters.dock(current_orbiter.name, self.goto.orbit_transfert.target.name)
+        self.ids.dock.opacity = 0
+        self.goto.cancel()
+
     def draw(self, dt):
         orbiters = self.world.orbiters
         current_orbiter = orbiters.get_current_orbiter()
@@ -281,8 +300,22 @@ class Graphics(BoxLayout):
             self.ids.goto_deltavtarget.text = "dv Target " + str(
                 int(self.goto.orbit_transfert.get_current_delta_v())
             )
-            self.ids.goto_distance.text = "distance " + str(
-                int(self.goto.orbit_transfert.get_current_distance())
-            )
-
+            distance = int(self.goto.orbit_transfert.get_current_distance())
+            self.ids.goto_distance.text = "distance " + str(distance)
+            if (
+                distance < 10000
+                and current_orbiter.dockable
+                and isinstance(self.goto.orbit_transfert.target, Orbiter)
+                and self.goto.orbit_transfert.target.dockable
+            ):
+                self.ids.dock.opacity = 1
+            else:
+                self.ids.dock.opacity = 0
+        else:
+            if self.goto.is_cancelled:
+                self.ids.goto_deltav.text = ""
+                self.ids.goto_deltavtarget.text = ""
+                self.ids.goto_time.text = ""
+                self.ids.goto_distance.text = ""
+                self.goto.is_cancelled = False
         self.lock = False

@@ -9,6 +9,7 @@ class Goto(Popup):
         self.select = 0
         self.display = []
         self.orbit_transfert = None
+        self.is_cancelled = False
 
     def set_world(self, world):
         self.world = world
@@ -69,3 +70,4 @@ class Goto(Popup):
     def cancel(self):
         self.orbit_transfert = None
         self.dismiss()
+        self.is_cancelled = True

@@ -100,7 +100,6 @@ class Scenery:
                     float(f),
                 )
             orbiter.orbit_projection.calculate_time_series(0)
-
             orbiters.add_orbiter(orbiter_name, orbiter)
         self.orbiters = orbiters
         return orbiters
