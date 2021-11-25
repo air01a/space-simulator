@@ -65,6 +65,7 @@ class Graphics(BoxLayout):
         self.orbit_factor = default_earth_size / (2 * 6378140)
         self.width, self.height = Window.size
         self.police_size = int(self.height / 800 * 18)
+        self.slider_hold = False
 
         self.draw_attractors = DrawAttractor()
         self.draw_attractors.init(world.main_attractor, self.orbit_factor)
@@ -84,8 +85,7 @@ class Graphics(BoxLayout):
         if self.world.controller:
             self.world.controller.add_control_callback(self.control_info)
             self.world.pilot.control_info_callback = self.control_info
-        self.world.time_controller.on_change_callback = self.set_time_slider
-
+        self.world.time_controller.set_call_back(self.on_time_change)
         self.goto = Goto()
         self.goto.set_world(world)
         self.init_zoom()
@@ -182,6 +182,10 @@ class Graphics(BoxLayout):
         else:
             self.world.time_controller.t_increment = 5 * (1.2 ** value)
 
+    def on_time_change(self):
+        value = self.world.time_controller.t_increment
+        self.set_time_slider(value)
+
     def set_time_slider(self, value):
         if value > 10:
             value = int(log(value / 5) / log(1.2))
@@ -224,6 +228,14 @@ class Graphics(BoxLayout):
 
             if current_orbiter != orbiter:
                 self.draw_trajectory.draw_ship(x_orbiter, y_orbiter, None, orbiter_name)
+                if (
+                    self.goto.orbit_transfert != None
+                    and orbiter.name == self.goto.orbit_transfert.target.name
+                ):
+                    orbit_values = orbiter.orbit_projection.orbit_values
+                    self.draw_trajectory.draw_trajectory(
+                        orbit_values, x, y, self.zoom_ratio, True
+                    )
             else:
 
                 orbit_values = orbiter.orbit_projection.orbit_values
@@ -258,6 +270,19 @@ class Graphics(BoxLayout):
             dv = self.goto.orbit_transfert.get_delta_v(
                 self.world.orbiters.get_current_orbiter().orbit
             )
-            self.ids.goto_time.text = "Time to go : " + str(int(dt))
+            if dt == 0:
+                dt = self.goto.orbit_transfert.get_time_to_reach(
+                    self.world.time_controller.t
+                )
+                self.ids.goto_time.text = "Time to reach : " + str(int(dt))
+            else:
+                self.ids.goto_time.text = "dt : " + str(int(dt))
             self.ids.goto_deltav.text = "dV : " + str(int(dv))
+            self.ids.goto_deltavtarget.text = "dv Target " + str(
+                int(self.goto.orbit_transfert.get_current_delta_v())
+            )
+            self.ids.goto_distance.text = "distance " + str(
+                int(self.goto.orbit_transfert.get_current_distance())
+            )
+
         self.lock = False

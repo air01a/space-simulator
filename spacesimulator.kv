@@ -181,7 +181,7 @@
                 orientation:'horizontal'
                 BoxLayout:
                     orientation: 'vertical'
-                    size: 500,300
+                    size: 500,350
                     pos_hint: { 'right': 1, 'top':1}
                     size_hint: None, None
                     BoxLayout:
@@ -227,11 +227,10 @@
                     BoxLayout:
                         orientation:'vertical'
                         size_hint: None,None
-                        size: 300,100
+                        size: 300,160
                         pos_hint: { 'right': 1, 'top':1}
                         Button: 
                             size_hint: None,None
-                            
                             text: 'GoTo'
                             size: 200,30
                             background_normal: ''
@@ -249,6 +248,19 @@
                             id: goto_deltav
                             text: ''
                             size: 300,30
+                        Label:
+                            size_hint: None,None
+                            halign: 'left'
+                            id: goto_deltavtarget
+                            text: ''
+                            size: 300,30
+                        Label:
+                            size_hint: None,None
+                            halign: 'left'
+                            id: goto_distance
+                            text: ''
+                            size: 300,30
+                            
 
 
         BoxLayout:
