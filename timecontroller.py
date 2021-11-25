@@ -8,14 +8,18 @@ import logging, inspect
 
 
 class TimeController:
+    def callback(self):
+        if len(self.on_change_callback) > 0:
+            for func in self.on_change_callback:
+                func()
+
     def time_accelerate(self):
         if self.t_increment < 5:
             self.t_increment += 1
         else:
             self.t_increment *= 2
 
-        if self.on_change_callback != None:
-            self.on_change_callback(self.t_increment)
+        self.callback()
 
         logging.debug(
             "+++++ %s - %s"
@@ -30,8 +34,7 @@ class TimeController:
     def time_normalize(self):
 
         self.t_increment = 0
-        if self.on_change_callback != None:
-            self.on_change_callback(self.t_increment)
+        self.callback()
 
         logging.debug(
             "+++++ %s - %s"
@@ -51,8 +54,7 @@ class TimeController:
         if self.t_increment < 0:
             self.t_increment = 0
 
-        if self.on_change_callback != None:
-            self.on_change_callback(self.t_increment)
+        self.callback()
         logging.debug(
             "+++++ %s - %s"
             % (
@@ -89,9 +91,7 @@ class TimeController:
                     self.t_increment = speed_limit
                     if self.t >= t1:
                         self.time_speed_limiter.pop(index)
-                        if len(self.on_change_callback) > 0:
-                            for func in self.on_change_callback:
-                                func()
+                        self.callback()
 
         self.t += (current_time - self.clock) * (1 + self.t_increment)
 
@@ -104,10 +104,8 @@ class TimeController:
 
     def set_time_increment(self, increment):
         self.t_increment = increment
-        if len(self.on_change_callback) != 0:
-            for func in self.on_change_callback:
-                func()
-            # self.on_change_callback(self.t_increment)
+        self.callback()
+        # self.on_change_callback(self.t_increment)
 
     def __init__(self, t0, event_listener, t_increment=0):
         self.event_listener = event_listener

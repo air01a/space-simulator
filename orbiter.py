@@ -9,7 +9,7 @@ import logging, inspect
 from constants import max_delta_t
 import configparser
 from orbitprojection import OrbitProjection
-from constants import rcs_push_delta_v
+from constants import rcs_push_delta_v, max_speed_before_crash
 
 ########################################
 # Define a composant of a stage
@@ -222,6 +222,18 @@ class Orbiter:
         elif self.lock == "P":
             self.orientation1 = self.v.angle2D()
 
+    def check_alt(self):
+        if self.r.norm() < self.attractor.radius:
+            if self.v.norm() > max_speed_before_crash:
+                return True
+            else:
+                if self.v.norm() > 0:
+                    self.v = Vector(0, 0, 0)
+                    self.r = self.attractor.radius * self.r / self.r.norm()
+                    print("Orbiter has landed")
+
+        return False
+
     # Apply forces and update vector v and r
     def update_position(self, time_controller, dt):
         trajectory_update = False
@@ -302,9 +314,7 @@ class Orbiter:
         self.check_boundaries(time_controller)
 
         # Detect rocket crash
-        if self.r.norm() < self.attractor.radius:
-            return True
-        return False
+        return self.check_alt()
 
     # Propagate kepler equation to calculate Velocity and position
     # Use for time acceleration
@@ -321,9 +331,7 @@ class Orbiter:
 
         self.set_attitude()
 
-        if self.r.norm() < self.attractor.radius:
-            return True
-        return False
+        return self.check_alt()
 
     # Calculate delta v when rocket motors are on
     def delta_v(self, t, dt):
