@@ -78,7 +78,7 @@ class SpaceSimulatorApp(App):
 
 # Application entry
 if __name__ == "__main__":
-    Config.set("graphics", "fullscreen", 0)
+    Config.set("graphics", "fullscreen", "auto")
     Config.set("graphics", "window_state", "maximized")
     Config.set('graphics', 'resizable', 1)
  
