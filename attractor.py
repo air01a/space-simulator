@@ -27,7 +27,7 @@ class Attractor:
         self.orbit = None
         self.picture = None
         self.orbit_projection = None
-        self.orbit_color = (1, 1, 1, 1)
+        self.orbit_color = (1, 1, 1, 0.2)
 
         self.min_size = 0
 

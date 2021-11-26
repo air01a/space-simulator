@@ -216,11 +216,14 @@ class Orbiter:
         self.rcs = True
 
     def set_attitude(self):
-
+        if self.v.norm() > 0:
+            vec = self.v
+        else:
+            vec = self.r
         if self.lock == "R":
-            self.orientation1 = pi + self.v.angle2D()
+            self.orientation1 = pi + vec.angle2D()
         elif self.lock == "P":
-            self.orientation1 = self.v.angle2D()
+            self.orientation1 = vec.angle2D()
 
     def check_alt(self):
         if self.r.norm() < self.attractor.radius:
@@ -323,7 +326,7 @@ class Orbiter:
         if self.controller:
             self.controller.control_flight_path(self)
         if self.v.norm() == 0:
-            return True
+            return False
         (r, v) = self.orbit.update_position(time_controller.t)
         if r != None:
             (self.r, self.v) = (r, v)

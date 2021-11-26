@@ -89,7 +89,8 @@ class OrbitTransfert:
         w_target = (mu / dest_a ** 3) ** 0.5
         w_source = (mu / source_a ** 3) ** 0.5
         alpha_init = self.target_angle - self.source_angle
-
+        if self.source_orbit.i < pi / 2:
+            alpha_init *= -1
         # Time
         alpha = (-alpha_init + w_target * self.time_to_target) - pi
         w_diff = w_source - w_target
