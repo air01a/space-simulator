@@ -76,6 +76,8 @@ class OrbitTransfert:
             return
 
         # Else, calculate orbital transfert parameters
+        grade_diff = (self.source_orbit.i - pi / 2) * (self.target_orbit.i - pi / 2) < 0
+        print(grade_diff)
         source_a = self.source_orbit.a
         dest_a = self.target_orbit.a
         mu = self.source_orbit.mu
@@ -87,13 +89,17 @@ class OrbitTransfert:
 
         # Phasis calcul
         w_target = (mu / dest_a ** 3) ** 0.5
+        if grade_diff:
+            w_target *= -1
         w_source = (mu / source_a ** 3) ** 0.5
         alpha_init = self.target_angle - self.source_angle
         if self.source_orbit.i < pi / 2:
             alpha_init *= -1
         # Time
         alpha = (-alpha_init + w_target * self.time_to_target) - pi
+
         w_diff = w_source - w_target
+
         self.t_burn = alpha / w_diff
         if self.t_burn < 0:
             self.t_burn += 2 * pi / abs(w_diff)
