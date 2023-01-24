@@ -43,7 +43,8 @@ class SpaceTime:
         )
 
     def __init__(self, file_name, control_info=None):
-        logging.basicConfig(format="Debug:%(message)s", level=logging.INFO)
+        
+        #logging.setLevel(ERROR)
         self.event_listener = EventListener()
 
         scene = Scenery(file_name)

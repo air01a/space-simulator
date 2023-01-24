@@ -25,7 +25,7 @@ from vector import Vector
 import constants
 import os
 import inspect
-import logging
+from kivy.logger import Logger
 
 
 class Orbit:
@@ -159,20 +159,20 @@ class Orbit:
             if r.dot(v) < 0:
                 f = 2 * np.pi - f
 
-        logging.debug(
+        Logger.debug(
             "+++++ %s - %s"
             % (
                 inspect.getfile(inspect.currentframe()),
                 inspect.currentframe().f_code.co_name,
             )
         )
-        logging.debug("a " + str(a))
-        logging.debug("e " + str(e))
-        logging.debug("i " + str(i))
-        logging.debug("raan " + str(raan))
-        logging.debug("arg_pe " + str(arg_pe))
-        logging.debug("f " + str(f))
-        logging.debug("----------------------------")
+        Logger.debug("a " + str(a))
+        Logger.debug("e " + str(e))
+        Logger.debug("i " + str(i))
+        Logger.debug("raan " + str(raan))
+        Logger.debug("arg_pe " + str(arg_pe))
+        Logger.debug("f " + str(f))
+        Logger.debug("----------------------------")
         self.set_elements(a, e, i, raan, arg_pe, f, t)
 
     # Return period
@@ -354,18 +354,18 @@ class Orbit:
             (r, v) = self.get_state(E)
             r = self.get_eci(r)
             v = self.get_eci(v)
-            logging.debug(
+            Logger.debug(
                 "+++++ %s - %s"
                 % (
                     inspect.getfile(inspect.currentframe()),
                     inspect.currentframe().f_code.co_name,
                 )
             )
-            logging.debug("dt %i" % (t - self.t0))
-            logging.debug("E %r" % E)
-            logging.debug("r %s" % str(r))
-            logging.debug("v %s" % str(v))
-            logging.debug("----------------------------")
+            Logger.debug("dt %i" % (t - self.t0))
+            Logger.debug("E %r" % E)
+            Logger.debug("r %s" % str(r))
+            Logger.debug("v %s" % str(v))
+            Logger.debug("----------------------------")
             return (r, v)
         return (None, None)
 

@@ -8,6 +8,7 @@ from kivy.config import Config
 from display import Graphics
 from spacetime import SpaceTime
 
+LOGLEVEL = 'critical'
 # Main Window, display graphics & co
 class MainWindow(BoxLayout, Screen):
     def __init__(self, **kwargs):
@@ -80,6 +81,6 @@ if __name__ == "__main__":
     Config.set("graphics", "fullscreen", "auto")
     Config.set("graphics", "window_state", "maximized")
     Config.set("graphics", "resizable", 1)
-
+    Config.set("kivy", "log_level", LOGLEVEL)
     Config.write()
     SpaceSimulatorApp().run()

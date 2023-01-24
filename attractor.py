@@ -6,9 +6,9 @@
 from math import atan2, sin, cos, exp
 from vector import Vector
 from orbit import Orbit
-import logging, inspect
+import inspect
 from orbitprojection import OrbitProjection
-
+from kivy.logger import Logger
 
 class Attractor:
     def __init__(self, name, radius, mu=None, mass=None, soi=0):
@@ -78,18 +78,18 @@ class Attractor:
         f = 1 / 2 * density * v.norm() ** 2 * drag_x_surf
         F = -(1 / v.norm()) * v * f
 
-        logging.debug(
+        Logger.debug(
             "+++++ %s - %s"
             % (
                 inspect.getfile(inspect.currentframe()),
                 inspect.currentframe().f_code.co_name,
             )
         )
-        logging.debug("Friction " + str(F) + " " + str(F.norm()))
-        logging.debug("Altitude " + str(h))
-        logging.debug("Speed " + str(v.norm()))
-        logging.debug("CSV;%i;%i" % (h, v.norm()))
-        logging.debug("----------------------------")
+        Logger.debug("Friction " + str(F) + " " + str(F.norm()))
+        Logger.debug("Altitude " + str(h))
+        Logger.debug("Speed " + str(v.norm()))
+        Logger.debug("CSV;%i;%i" % (h, v.norm()))
+        Logger.debug("----------------------------")
 
         return F
 
