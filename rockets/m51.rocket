@@ -11,16 +11,16 @@ name = M51.3
 #
 # part = flow (kg/s), exhaust speed (m/s), dry mass (kg), propellant (kg), drag
 [stage1]
-stage1 = 460,2750,3000,30000,3.5
+stage1 = 460,3100,3000,30000,3.5
 
 [stage2]
-stage2 = 170,2900,1000,12000,0
+stage2 = 170,3200,1000,12000,0
 
 [stage3]
-stage3 = 50,3500,400,3000,0
+stage3 = 50,3200,400,3000,0
 
 [stage4]
-payload = 0,0,2600,0,0
+payload = 0,0,1500,0,0
 
 # Shapes for the 2D drawing of the rocket (meters)
 [shape.stage1]
