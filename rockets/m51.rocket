@@ -1,0 +1,61 @@
+[param]
+name = M51.3
+
+# M51.3 : French submarine-launched ballistic missile, 3 solid stages.
+# Public figures (open sources, 2025) : length ~12 m, diameter 2.3 m,
+# launch mass ~52 t, 3 solid-propellant stages.
+# The split between stages, flows, exhaust speeds and the payload mass are NOT
+# public : they are ESTIMATES, consistent with the total mass and with
+# comparable solid-propellant missiles (Isp ~280-300 s).
+# Ideal delta-v ~7.3 km/s : ballistic (intercontinental) range, not orbital.
+#
+# part = flow (kg/s), exhaust speed (m/s), dry mass (kg), propellant (kg), drag
+[stage1]
+stage1 = 460,2750,3000,30000,3.5
+
+[stage2]
+stage2 = 170,2900,1000,12000,0
+
+[stage3]
+stage3 = 50,3500,400,3000,0
+
+[stage4]
+payload = 0,0,2600,0,0
+
+# Shapes for the 2D drawing of the rocket (meters)
+[shape.stage1]
+length = 5.0
+diameter = 2.3
+top = none
+nozzles = 1
+color = #f2f2f2
+band = #1e1e1e
+position = center
+
+[shape.stage2]
+length = 3.0
+diameter = 2.3
+top = none
+nozzles = 1
+color = #f2f2f2
+position = center
+
+[shape.stage3]
+length = 1.4
+diameter = 2.3
+top = none
+nozzles = 1
+color = #8c8c8c
+position = center
+
+[shape.payload]
+length = 2.6
+diameter = 2.3
+top = cone
+nozzles = 0
+color = #f2f2f2
+position = center
+
+# Head: reentry body with a heat shield (survives the atmospheric reentry)
+[equipment.payload]
+heat_shield = yes

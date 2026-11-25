@@ -8,6 +8,9 @@ from orbit import Orbit
 import logging, inspect
 from constants import max_delta_t
 import configparser
+from rocketshape import parse_shape
+from equipment import parse_equipment
+import reentry
 from orbitprojection import OrbitProjection
 from constants import rcs_push_delta_v, max_speed_before_crash
 
@@ -25,14 +28,23 @@ class Stage_Composant:
         carburant_mass,
         drag_x_surf=0,
         payload=False,
+        shape=None,
+        equipment=None,
     ):
         self.motor_flow = motor_flow
         self.motor_speed = motor_speed
         self.empty_mass = empty_mass
         self.carburant_mass = carburant_mass
+        # For the fuel level of the 2D drawing
+        self.initial_carburant_mass = carburant_mass
+        # Shape for the 2D drawing (follows the part: separation, docking)
+        self.shape = shape or parse_shape(None, payload)
         self.throttle = 1
         self.payload = payload
         self.drag_x_surf = drag_x_surf
+        equipment = equipment or parse_equipment(None)
+        self.heat_shield = equipment.heat_shield
+        self.parachute = equipment.parachute
 
     def thrust(self, dt):
         if self.carburant_mass > 0:
@@ -109,6 +121,8 @@ class Stages:
             thrust += thr
             if (
                 thr + carb == 0
+                # A part without tank (capsule) is never "empty": not dropped
+                and self.stages[0][part].initial_carburant_mass > 0
                 and part not in self.empty_part
                 and not self.stages[0][part].payload
             ):
@@ -154,6 +168,17 @@ class Orbiter:
         self.rcs = True
         self.dockable = False
         self.engine_on = False
+        # Atmospheric reentry
+        self.heat_flux = 0.0  # W/m2, last integration step
+        self.heat_load = 0.0  # J/m2, see reentry.update_heat_load
+        self.destroyed = False  # Burnt up in the atmosphere
+        self.parachute_deployed = False  # Never retracted
+        self.parachute_progress = 0.0  # Opening, 0..1
+        # Information bar: path length (m) and start point (for the ground range)
+        self.distance = 0.0
+        self.felt_acceleration = 0.0  # m/s2, thrust + drag (no gravity)
+        self.start_r = None
+        self.start_attractor = None
 
     def start_engine(self):
         self.engine_on = True
@@ -162,8 +187,83 @@ class Orbiter:
         self.engine_on = False
         self.thrust = 0
 
+    # Engine pushing (or about to push: engine on with fuel left). The thrust
+    # field is only updated by the numerical integration, so it cannot be used
+    # alone to choose it (engine started on the pad with time accelerated)
+    def is_burning(self):
+        if self.thrust:
+            return True
+        if not self.engine_on or self.stages.get_carburant_mass() <= 0:
+            return False
+        # Engine "on" at throttle 0 (mission coasting phase): not pushing
+        stage = self.stages.stages[0] if self.stages.stages else {}
+        return any(part.throttle > 0 for part in stage.values())
+
     def drop_stage(self):
         self.stages.drop_stage()
+
+    def parts(self):
+        return [part for stage in self.stages.stages for part in stage.values()]
+
+    def has_heat_shield(self):
+        return any(part.heat_shield for part in self.parts())
+
+    # Stagnation point radius for the heating: the widest part of the stack
+    def nose_radius(self):
+        return max((part.shape.diameter for part in self.parts()), default=1.0) / 2
+
+    def _track_start(self):
+        if self.start_r is None:
+            self.start_r = Vector(self.r.x, self.r.y, self.r.z)
+            self.start_attractor = self.attractor
+
+    # Ground distance (m) between the start point and the point under the
+    # orbiter, along the surface. None around another attractor
+    def ground_range(self):
+        if self.start_r is None or self.attractor is not self.start_attractor:
+            return None
+        norm = self.start_r.norm() * self.r.norm()
+        if norm == 0:
+            return 0.0
+        cos_angle = max(-1.0, min(1.0, self.start_r.dot(self.r) / norm))
+        return acos(cos_angle) * self.attractor.radius
+
+    def parachute(self):
+        return next((part.parachute for part in self.parts() if part.parachute), None)
+
+    def drag_area(self):
+        return self.stages.drag_x_surf + reentry.parachute_area(self.parachute(), self.parachute_progress)
+
+    def update_parachute(self, dt):
+        if self.parachute_deployed:
+            self.parachute_progress = reentry.opening_progress(self.parachute_progress, dt)
+            return
+        h = self.altitude()
+        if self.attractor.get_density(max(h, 0.0)) <= 0:
+            return
+        descending = self.r.dot(self.v) < 0
+        if reentry.should_deploy(self.parachute(), h, self.v.norm(), descending):
+            self.parachute_deployed = True
+            print("Orbiter %s: parachute deployed" % self.name)
+
+    def altitude(self):
+        return self.r.norm() - self.attractor.radius
+
+    # Moving in an atmosphere: needs the numerical integration (drag, heating)
+    def in_atmosphere(self):
+        if self.attractor is None or self.v.norm() == 0:
+            return False
+        return self.altitude() > 0 and self.attractor.get_density(self.altitude()) > 0
+
+    # Heating during dt; return True if the orbiter burns up
+    def update_heating(self, dt):
+        h = self.altitude()
+        rho = self.attractor.get_density(h) if h > 0 else 0.0
+        self.heat_flux = reentry.heat_flux(rho, self.v.norm(), self.nose_radius())
+        self.heat_load = reentry.update_heat_load(self.heat_load, self.heat_flux, dt)
+        if self.heat_load > reentry.HEAT_LOAD_MAX and not self.has_heat_shield():
+            self.destroyed = True
+        return self.destroyed
 
     def set_state(self, r, v, t):
         self.r = r
@@ -253,6 +353,7 @@ class Orbiter:
                 delta_t_array.append(increment)
                 t_increment += increment
 
+        self._track_start()
         # Iterate delta_t
         for dt in delta_t_array:
             # If motors are on, calculate dv
@@ -268,42 +369,55 @@ class Orbiter:
             else:
                 a = Vector(0, 0, 0)
 
+            # Felt acceleration (thrust + drag, no gravity), information bar
+            felt = Vector(0, 0, 0)
             # If motors are on, update velocity vector
             if dv != None:
                 self.v += dv
                 trajectory_update = True
+                if dt > 0:
+                    felt = dv * (1 / dt)
 
             # If the rocket is in atmosphere, calculate the drag force
+            self.update_parachute(dt)
             friction = self.attractor.get_drag_force(
-                self.r.norm() - self.attractor.radius, self.v, self.stages.drag_x_surf
+                self.r.norm() - self.attractor.radius, self.v, self.drag_area()
             )
             if friction != 0:
                 dv = Vector(0, 0, 0)
                 a += friction / (self.stages.get_total_mass())
+                felt += friction / (self.stages.get_total_mass())
                 trajectory_update = True
+            self.felt_acceleration = felt.norm()
 
             # Integrate to calculate Velocity vector and position
             self.v += (a + self.last_a) / 2 * dt
             self.last_a = a
             self.r = self.r + self.v * dt
+            self.distance += self.v.norm() * dt
+
+            if self.update_heating(dt):
+                return True
 
             if self.controller:
                 self.controller.control_flight_path(self)
 
         self.set_attitude()
 
-        logging.debug(
-            "+++++ %s - %s"
-            % (
-                inspect.getfile(inspect.currentframe()),
-                inspect.currentframe().f_code.co_name,
+        # Skip the (costly) message formatting when DEBUG is off
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug(
+                "+++++ %s - %s"
+                % (
+                    inspect.getfile(inspect.currentframe()),
+                    inspect.currentframe().f_code.co_name,
+                )
             )
-        )
-        logging.debug("Position " + str(self.r))
-        logging.debug("Distance " + str(self.r.norm()))
-        logging.debug("Velocity " + str(self.v))
-        logging.debug("Velocity " + str(self.v.norm()))
-        logging.debug("----------------------------")
+            logging.debug("Position " + str(self.r))
+            logging.debug("Distance " + str(self.r.norm()))
+            logging.debug("Velocity " + str(self.v))
+            logging.debug("Velocity " + str(self.v.norm()))
+            logging.debug("----------------------------")
 
         # If the trajectory has changed, update the kepler projection
         if (
@@ -312,7 +426,7 @@ class Orbiter:
             and self.v.norm() > 0
         ):
             self.set_state(self.r, self.v, t)
-            self.orbit_projection.calculate_time_series(t)
+            self.orbit_projection.request_update(t)
 
         self.check_boundaries(time_controller)
 
@@ -325,8 +439,14 @@ class Orbiter:
 
         if self.controller:
             self.controller.control_flight_path(self)
+        # Out of the atmosphere (else numerical integration): cools down
+        self.heat_flux = 0.0
+        self.heat_load = reentry.update_heat_load(self.heat_load, 0.0, time_controller.delta_t())
         if self.v.norm() == 0:
             return False
+        self._track_start()
+        self.distance += self.v.norm() * time_controller.delta_t()
+        self.felt_acceleration = 0.0  # Kepler propagation: free fall
         (r, v) = self.orbit.update_position(time_controller.t)
         if r != None:
             (self.r, self.v) = (r, v)
@@ -344,7 +464,8 @@ class Orbiter:
         if self.rcs:
             self.dv = rcs_push_delta_v * v_direction
             self.rcs = 0
-        if self.engine_on:
+        # dt == 0 on the first step (no time elapsed yet): nothing to integrate
+        if self.engine_on and dt > 0:
             mass = self.stages.get_total_mass()
             thrust = self.stages.get_thrust(dt)
             self.thrust = thrust / (1000 * dt)
@@ -392,8 +513,13 @@ class Orbiters:
         if len(self.orbiters) == 1:
             self.current_orbiter = name
 
+    # Return False (and change nothing) if there is no orbiter with this name
+    # (ex: it has crashed)
     def set_active_orbiter(self, name):
+        if name not in self.orbiters:
+            return False
         self.current_orbiter = name
+        return True
 
     def get_current_orbiter(self):
         if self.current_orbiter == None:
@@ -426,6 +552,9 @@ class Orbiters:
 
                 if self.current_orbiter == None and len(self.orbiters) > 0:
                     self.current_orbiter = list(self.orbiters.keys())[0]
+        # Done: otherwise a new orbiter with the same name (ex: a separated part)
+        # would be removed as soon as it is created
+        self.deleted_orbiters = []
 
     def dock(self, ship1_name, ship2_name):
         ship1 = self.get_orbiter(ship1_name)
@@ -438,7 +567,7 @@ class Orbiters:
 
     def separate_stage(self, orbiter, part_name, thrust=False):
         if part_name in orbiter.stages.empty_part:
-            orbiter.stages.empty_part.pop(orbiter.stage.empty_part.index(part_name))
+            orbiter.stages.empty_part.pop(orbiter.stages.empty_part.index(part_name))
         if part_name == "payload":
             part = orbiter.stages.sep_payload()
         else:
@@ -448,21 +577,57 @@ class Orbiters:
         stages = Stages()
         stages.add_stage()
         stages.add_part(part_name, part)
-
-        new_orbiter = Orbiter(part_name, stages)
-        new_orbiter.dockable = orbiter.dockable
-        new_orbiter.set_attractor(orbiter.attractor)
-        self.add_orbiter(part_name, new_orbiter)
-        new_orbiter.set_state(orbiter.r, orbiter.v, self.time.t)
-        new_orbiter.orbit_projection.calculate_time_series(self.time.t)
+        self._spawn(orbiter, part_name, stages)
         orbiter.engine_on = thrust
 
         print("############# Stage Separation ##############")
         print(part)
         print("#############################################")
 
+    # Several central parts of the same stage (ex: Apollo SM + CM) leave
+    # together, as one orbiter stacked in the file order (first = stage 0)
+    def separate_group(self, orbiter, part_names):
+        if len(orbiter.stages.stages) < 2:
+            return
+        stages = Stages()
+        for part_name in part_names:
+            if part_name in orbiter.stages.empty_part:
+                orbiter.stages.empty_part.remove(part_name)
+            part = orbiter.stages.sep_part(part_name)
+            if part is None:
+                continue
+            stages.add_stage()
+            stages.add_part(part_name, part)
+        if not stages.stages:
+            return
+        self._spawn(orbiter, "+".join(part_names), stages)
+        orbiter.engine_on = False
+        print("############# Stage Separation ##############")
+        print("+".join(part_names))
+        print("#############################################")
+
+    def _spawn(self, orbiter, name, stages):
+        new_orbiter = Orbiter(name, stages)
+        # Same flight so far: same counters (information bar)
+        new_orbiter.distance = orbiter.distance
+        new_orbiter.start_r = orbiter.start_r
+        new_orbiter.start_attractor = orbiter.start_attractor
+        new_orbiter.dockable = orbiter.dockable
+        new_orbiter.set_attractor(orbiter.attractor)
+        self.add_orbiter(name, new_orbiter)
+        new_orbiter.set_state(orbiter.r, orbiter.v, self.time.t)
+        new_orbiter.orbit_projection.calculate_time_series(self.time.t)
+        return new_orbiter
+
     def separate_full_stage(self, orbiter):
-        for part in list(orbiter.stages.stages[0].keys()):
+        if not orbiter.stages.stages:
+            return
+        stage = orbiter.stages.stages[0]
+        centers = [name for name, part in stage.items() if part.shape.position != "side"]
+        if len(centers) > 1:
+            self.separate_group(orbiter, centers)
+            self.apply_remove()
+        for part in [name for name in stage if name not in centers or len(centers) == 1]:
             self.separate_stage(orbiter, part)
             self.apply_remove()
 
@@ -486,6 +651,18 @@ class Load_Orbiters:
             if value == "1" or value.lower() == "true":
                 dockable = True
         stages = Stages()
+        # Part names are lowercased by configparser, section names are not:
+        # [shape.S-IC] must match the part "S-IC" (key "s-ic")
+        shape_sections = {
+            section.lower(): config[section]
+            for section in config.sections()
+            if section.lower().startswith("shape.")
+        }
+        equipment_sections = {
+            section.lower(): config[section]
+            for section in config.sections()
+            if section.lower().startswith("equipment.")
+        }
 
         while not finish:
             stage += 1
@@ -517,6 +694,8 @@ class Load_Orbiters:
                             int(carburant_mass),
                             float(drag_x_surf),
                             payload,
+                            parse_shape(shape_sections.get("shape." + part), payload),
+                            parse_equipment(equipment_sections.get("equipment." + part)),
                         ),
                     )
             else:

@@ -3,7 +3,9 @@ name=LEM
 dockable=True
 
 [stage1]
-CSM=32,2800,8500,6300,30
+# CSM: Service Module (engine, fuel) + Command Module (crew capsule)
+SM=32,2800,3000,6300,15
+CM=0,0,5500,0,15
 
 [stage2]
 LEM_Descent=32,2800,2000,10000,0
@@ -11,4 +13,46 @@ LEM_Descent=32,2800,2000,10000,0
 [stage3]
 LEM_Ascent=10,2800,2000,2500,0
 
+# Shapes for the 2D drawing of the rocket (meters)
+[shape.sm]
+length = 7.5
+diameter = 3.9
+top = none
+nozzles = 1
+color = #b4b4b4
+position = center
 
+# Capsule + launch escape tower (the tower is drawn on the launcher only)
+[shape.cm]
+length = 13.1
+diameter = 3.9
+top = capsule_les
+nozzles = 0
+color = #d8d8d8
+position = center
+
+# Heat shield: survives the atmospheric reentry
+# parachute = canopy diameter (m), count, deploy altitude (m), max deploy speed (m/s)
+[equipment.cm]
+heat_shield = yes
+parachute = 25.4, 3, 3000, 200
+
+[shape.lem_descent]
+length = 3.2
+diameter = 4.2
+top = none
+nozzles = 1
+color = #c9a227
+position = center
+draw_below = sm
+enclosed = true
+
+[shape.lem_ascent]
+length = 2.8
+diameter = 4.0
+top = none
+nozzles = 1
+color = #8c8c8c
+position = center
+draw_below = sm
+enclosed = true

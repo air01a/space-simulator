@@ -78,18 +78,20 @@ class Attractor:
         f = 1 / 2 * density * v.norm() ** 2 * drag_x_surf
         F = -(1 / v.norm()) * v * f
 
-        logging.debug(
-            "+++++ %s - %s"
-            % (
-                inspect.getfile(inspect.currentframe()),
-                inspect.currentframe().f_code.co_name,
+        # Skip the (costly) message formatting when DEBUG is off
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            logging.debug(
+                "+++++ %s - %s"
+                % (
+                    inspect.getfile(inspect.currentframe()),
+                    inspect.currentframe().f_code.co_name,
+                )
             )
-        )
-        logging.debug("Friction " + str(F) + " " + str(F.norm()))
-        logging.debug("Altitude " + str(h))
-        logging.debug("Speed " + str(v.norm()))
-        logging.debug("CSV;%i;%i" % (h, v.norm()))
-        logging.debug("----------------------------")
+            logging.debug("Friction " + str(F) + " " + str(F.norm()))
+            logging.debug("Altitude " + str(h))
+            logging.debug("Speed " + str(v.norm()))
+            logging.debug("CSV;%i;%i" % (h, v.norm()))
+            logging.debug("----------------------------")
 
         return F
 

@@ -62,18 +62,14 @@ class DrawAttractor(Widget):
             return
         (center_x, center_y) = self.attractor_display_coordinates[attractor.parent.name]
         orbit_values = attractor.orbit_projection.orbit_values
-        (x2, y2, z2) = orbit_values.points[0]
-        x2 = self.scale(x2, zoom_ratio) + center_x
-        y2 = self.scale(y2, zoom_ratio) + center_y
+        k = self.ratio * zoom_ratio
 
         with self.canvas.after:
             (r, g, b, a) = attractor.orbit_color
             Color(r, g, b, a)
-            for (x, y, z) in orbit_values.points[1:-1]:
-                x = self.ratio * zoom_ratio * x + center_x
-                y = self.ratio * zoom_ratio * y + center_y
-                Line(points=[x, y, x2, y2], width=0.5)
-                (x2, y2) = (x, y)
+            # A single Line for the whole orbit
+            pts = orbit_values.points[:-1, :2] * k + (center_x, center_y)
+            Line(points=pts.ravel().tolist(), width=0.5)
 
     def draw_attractor(self, zoom_ratio, current_orbiter):
         self.canvas.after.clear()

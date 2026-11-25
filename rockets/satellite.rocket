@@ -3,3 +3,14 @@ name = Satellite
 
 [stage1]
 payload=20,3000,4000,5500,0
+
+# Shapes for the 2D drawing of the rocket (meters)
+[shape.payload]
+length = 3
+diameter = 2
+top = none
+nozzles = 0
+color = #8c8c8c
+band = #c9a227
+position = center
+satellite = 2.5, 1.8, 14     ; body height, body width, solar panels span (m)

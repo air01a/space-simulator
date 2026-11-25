@@ -9,6 +9,7 @@ from orbiter import Orbiter, Stages, Stage_Composant, Orbiters
 from math import pi
 import json
 from vector import Vector
+from flightinfo import flight_info
 
 
 class Controller:
@@ -76,37 +77,7 @@ class Controller:
                     self.update_info("----  Separating %s" % part_name, None, None)
 
     def get_info(self):
-        orbiter = self.orbiters.get_current_orbiter()
-        if orbiter == None:
-            return "No Orbiter found"
-        altitude = (orbiter.r.norm() - orbiter.attractor.radius) / 1000
-        (perigee, apogee) = orbiter.orbit.get_limit()
-        perigee = int((perigee - orbiter.attractor.radius) / 1000)
-        apogee = int((apogee - orbiter.attractor.radius) / 1000)
-        perigee = max(0, perigee)
-        apogee = max(0, apogee)
-        velocity = orbiter.v.norm() / 1000
-        if velocity > 0.005:
-            info = "time thrust altitude velocity carburant orientation aphelion perihelion\n%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg [%ikm, %ikm]" % (
-                int(self.time.t),
-                orbiter.thrust,
-                altitude,
-                velocity,
-                int(orbiter.stages.get_carburant_mass()),
-                int(orbiter.orientation1 * 180 / 3.141592),
-                perigee,
-                apogee,
-            )
-        else:
-            info = "time thrust altitude velocity carburant orientation\n%is %.2fkN %.2fkm %.2fkm/s %ikg %ideg" % (
-                int(self.time.t),
-                orbiter.thrust,
-                altitude,
-                velocity,
-                int(orbiter.stages.get_carburant_mass()),
-                int(orbiter.orientation1 * 180 / 3.141592),
-            )
-        return info
+        return flight_info(self.orbiters, self.time)
 
     def update_info(self, message, thrust, orientation, engine=None):
         for callback in self.control_info_callback:

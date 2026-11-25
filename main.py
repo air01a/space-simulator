@@ -20,19 +20,20 @@ class MainWindow(BoxLayout, Screen):
         self.graphics.init(self.space_time)
 
         event = Clock.schedule_interval(self.space_time.update, 1 / 60.0)
-        display = Clock.schedule_interval(self.graphics.draw, 1 / 24.0)
-        if self.space_time.controller:
-            info = Clock.schedule_interval(self.show_info, 1 / 10.0)
+        display = Clock.schedule_interval(self.graphics.draw, 1 / 60.0)
+        # Information bar (speed, altitude, fuel...), with or without a mission
+        info = Clock.schedule_interval(self.show_info, 1 / 10.0)
         Window.bind(size=self.resize)
 
     def show_info(self, ft):
-        self.ids.infoLabel.text = self.space_time.controller.get_info()
+        self.ids.infoLabel.text = self.space_time.get_info()
 
     def show_info_control(self, text):
         self.ids.controlInfoLabel.text = text
 
     def on_request_close(self, *args):
-        self.space_time.controller.stop()
+        if self.space_time.controller:
+            self.space_time.controller.stop()
 
     def resize(self, pos, size):
         self.graphics.update()

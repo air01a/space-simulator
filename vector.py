@@ -2,6 +2,7 @@
 # Small Vector management class
 ########################################
 
+import math
 import numpy as np
 
 class Vector: 
@@ -65,11 +66,16 @@ class Vector:
 
         return self.__class__(x,y,z)
 
+    # Angle of the vector in the (x, y) plane, in ]-pi/2, 3pi/2]
+    # atan2 handles every quadrant without dividing (x == 0 is fine), and returns 0
+    # for a null vector (ex: position of the root attractor) instead of NaN
     def angle2D(self):
-        angle = np.arctan(self.y/self.x)
-        if self.x<0: 
-            return angle + np.pi
-
+        if self.x == 0 and self.y == 0:
+            return 0.0
+        angle = math.atan2(self.y, self.x)
+        # Same range as the previous arctan(y/x) (+pi when x < 0) implementation
+        if angle < -np.pi / 2:
+            angle += 2 * np.pi
         return angle
 
 

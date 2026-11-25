@@ -13,6 +13,8 @@ from constants import (
 )
 
 from graphical.ship import DrawTrajectory
+from graphical.rocket import RocketView
+from graphical.ghost import ghost_label
 from graphical.goto import Goto
 from graphical.compas import Compas
 from graphical.attractor import DrawAttractor
@@ -22,6 +24,10 @@ from orbiter import Orbiter
 class Graphics(BoxLayout):
     def on_orbiter_touch(self, direction):
         orbiters = self.orbiters.get_current_orbiter_names()
+        if len(orbiters) == 0:
+            self.orbiter_index = 0
+            self.ids.orbiter_control.text = "None"
+            return
         self.orbiter_index += direction
         if self.orbiter_index < 0:
             self.orbiter_index = len(orbiters) - 1
@@ -35,7 +41,31 @@ class Graphics(BoxLayout):
             self.ids.orbiter_control.text = "None"
 
     def change_orbiter(self):
-        self.orbiters.current_orbiter = self.ids.orbiter_control.text
+        if not self.orbiters.set_active_orbiter(self.ids.orbiter_control.text):
+            # Selected orbiter does not exist anymore (crash, docking...)
+            self.sync_orbiter_selector()
+
+    # Rocket panel: bottom right of the graphics area, size from the window height
+    def update_rocket_view(self, orbiter):
+        h = 0.375 * Window.height
+        w = h * 2 / 3
+        self.rocket_view.size = (w, h)
+        self.rocket_view.pos = (self.right - w - 10, self.y + 10)
+        self.rocket_view.update(orbiter)
+
+    # Keep the orbiter selector on an existing orbiter: when the selected one is
+    # removed, go back to the controlled orbiter (or "None" if there is none left)
+    def sync_orbiter_selector(self):
+        names = self.orbiters.get_current_orbiter_names()
+        if self.ids.orbiter_control.text in names:
+            return
+        current = self.orbiters.get_current_orbiter_name()
+        if current in names:
+            self.orbiter_index = names.index(current)
+            self.ids.orbiter_control.text = current
+        else:
+            self.orbiter_index = 0
+            self.ids.orbiter_control.text = "None"
 
     def drop_payload(self):
         self.world.pilot.drop_payload()
@@ -75,6 +105,9 @@ class Graphics(BoxLayout):
         self.draw_trajectory.police_size = self.police_size
         self.ids.dynamics.add_widget(self.draw_attractors)
         self.ids.dynamics.add_widget(self.draw_trajectory)
+        # Rocket panel (bottom right): 2D drawing of the controlled orbiter
+        self.rocket_view = RocketView()
+        self.ids.dynamics.add_widget(self.rocket_view)
         self.ids.compas.init(world)
         world.event_listener.add_key_event(
             112, self.change_center, "Change screen center (attractor vs ship)"
@@ -85,7 +118,8 @@ class Graphics(BoxLayout):
 
         if self.world.controller:
             self.world.controller.add_control_callback(self.control_info)
-            self.world.pilot.control_info_callback = self.control_info
+        # Pilot messages (engine, payload), with or without a mission
+        self.world.pilot.control_info_callback = self.control_info
         self.world.time_controller.set_call_back(self.on_time_change)
         self.goto = Goto()
         self.goto.set_world(world)
@@ -111,10 +145,24 @@ class Graphics(BoxLayout):
             self.ids.switch.active = engine
 
     def engine_on(self, active):
+        # Switch moved by sync_engine_switch (display only): no engine command
+        if getattr(self, "_syncing_switch", False):
+            return
         if active:
             self.world.pilot.engine_on()
         else:
             self.world.pilot.engine_off()
+
+    # The Engine switch shows the real state of the controlled orbiter's engine:
+    # it can change without the switch (stage separation, mission, orbiter change)
+    def sync_engine_switch(self, orbiter):
+        engine = bool(orbiter is not None and orbiter.engine_on)
+        if self.ids.switch.active != engine:
+            self._syncing_switch = True
+            try:
+                self.ids.switch.active = engine
+            finally:
+                self._syncing_switch = False
 
     def rcs_push(self):
         self.world.orbiters.get_current_orbiter().rcs_push()
@@ -236,9 +284,13 @@ class Graphics(BoxLayout):
             self.zoom_ratio, current_orbiter
         )
         self.draw_trajectory.clear()
+        self.sync_orbiter_selector()
+        self.sync_engine_switch(current_orbiter)
+        self.update_rocket_view(current_orbiter)
 
         for orbiter_name in orbiters.get_orbiters().keys():
             orbiter = orbiters.get_orbiter(orbiter_name)
+            orbiter.orbit_projection.refresh()
 
             (x, y) = attractor_display_coordinates[orbiter.attractor.name]
             (x_orbiter, y_orbiter) = self.draw_attractors.get_ship_coordinates(
@@ -261,10 +313,43 @@ class Graphics(BoxLayout):
                 self.draw_trajectory.draw_trajectory(
                     orbit_values, x, y, self.zoom_ratio
                 )
-                if orbit_values and orbit_values.child != None:
-                    (x2, y2) = attractor_display_coordinates[
-                        orbit_values.child.attractor.name
+                if orbit_values and orbit_values.exit_ghost != None:
+                    # SOI exit: attractor position when the orbiter leaves its SOI
+                    (xp, yp) = attractor_display_coordinates[
+                        orbiter.attractor.parent.name
                     ]
+                    scale = self.draw_trajectory.scale
+                    self.draw_trajectory.draw_ghost(
+                        xp + scale(orbit_values.exit_ghost.x, self.zoom_ratio),
+                        yp + scale(orbit_values.exit_ghost.y, self.zoom_ratio),
+                        orbiter.attractor,
+                        self.zoom_ratio,
+                        ghost_label(
+                            orbiter.attractor.name,
+                            orbit_values.child.orbit.t0 - self.world.time_controller.t,
+                        ),
+                    )
+                if orbit_values and orbit_values.child != None:
+                    origin = orbit_values.child.orbit_values.origin
+                    if origin != None:
+                        # Child attractor position at SOI entry time
+                        scale = self.draw_trajectory.scale
+                        x2 = x + scale(origin.x, self.zoom_ratio)
+                        y2 = y + scale(origin.y, self.zoom_ratio)
+                        self.draw_trajectory.draw_ghost(
+                            x2,
+                            y2,
+                            orbit_values.child.attractor,
+                            self.zoom_ratio,
+                            ghost_label(
+                                orbit_values.child.attractor.name,
+                                orbit_values.soi_entry[0] - self.world.time_controller.t,
+                            ),
+                        )
+                    else:
+                        (x2, y2) = attractor_display_coordinates[
+                            orbit_values.child.attractor.name
+                        ]
                     self.draw_trajectory.draw_trajectory(
                         orbit_values.child.orbit_values, x2, y2, self.zoom_ratio, True
                     )

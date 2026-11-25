@@ -11,3 +11,45 @@ eps=17,6000,2100,13000,0
 
 [stage3]
 payload=20,3000,4000,5500,0
+
+# Shapes for the 2D drawing of the rocket (meters)
+[shape.booster1]
+length = 31
+diameter = 3
+top = ogive
+nozzles = 1
+color = #f2f2f2
+position = side
+
+[shape.booster2]
+length = 31
+diameter = 3
+top = ogive
+nozzles = 1
+color = #f2f2f2
+position = side
+
+[shape.epc]
+length = 30.5
+diameter = 5.4
+top = none
+nozzles = 1
+color = #f2f2f2
+position = center
+
+[shape.eps]
+length = 3.4
+diameter = 5.4
+top = none
+nozzles = 1
+color = #8c8c8c
+position = center
+
+[shape.payload]
+length = 17
+diameter = 5.4
+top = fairing
+nozzles = 0
+color = #f2f2f2
+position = center
+satellite = 4.5, 2.5, 30     ; body height, body width, solar panels span (m)

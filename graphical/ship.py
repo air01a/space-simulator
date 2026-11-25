@@ -5,13 +5,10 @@ from kivy.core.text import Label as CoreLabel
 import numpy as np
 
 
-class DrawTrajectory(Widget):
-    def draw_soi(self, x, y, radius, color):
-        (r, g, b, a) = color
-        with self.canvas:
-            Color(r, g, b, a)
-            Line(circle=(x, y, radius), width=1)
+GHOST_COLOR = (0, 1, 1)
 
+
+class DrawTrajectory(Widget):
     def set_ratio(self, ratio):
         self.ratio = ratio
 
@@ -21,6 +18,43 @@ class DrawTrajectory(Widget):
 
     def scale(self, x, zoom_ratio):
         return x * self.ratio * zoom_ratio
+
+    # "Ghost" of an attractor at a predicted position (ex: moon at encounter):
+    # its SOI (light veil + dashed circle), the attractor picture (with a minimum
+    # size to stay visible when zoomed out) and a label (name + delay)
+    def draw_ghost(self, x, y, attractor, zoom_ratio, label=None):
+        soi_r = self.scale(attractor.soi, zoom_ratio)
+        body_r = max(self.scale(attractor.radius, zoom_ratio), attractor.min_size, 5)
+        with self.canvas.before:
+            Color(*GHOST_COLOR, 0.10)
+            Ellipse(pos=(x - soi_r, y - soi_r), size=(2 * soi_r, 2 * soi_r))
+            Color(*GHOST_COLOR, 0.9)
+            Line(circle=(x, y, soi_r), width=1, dash_length=6, dash_offset=4)
+            Color(1, 1, 1, 0.6)
+            Ellipse(
+                pos=(x - body_r, y - body_r),
+                size=(2 * body_r, 2 * body_r),
+                source=attractor.picture,
+            )
+            if label:
+                texture = self.ghost_label_texture(label)
+                Color(*GHOST_COLOR, 1)
+                Rectangle(
+                    texture=texture,
+                    pos=(x + max(soi_r, body_r) + 4, y - texture.height / 2),
+                    size=texture.size,
+                )
+
+    def ghost_label_texture(self, text):
+        size = int(getattr(self, "police_size", 18) * 0.8)
+        cache = self.__dict__.setdefault("_ghost_labels", {})
+        if (text, size) not in cache:
+            if len(cache) > 50:
+                cache.clear()
+            label = CoreLabel(text=text, font_size=size)
+            label.refresh()
+            cache[(text, size)] = label.texture
+        return cache[(text, size)]
 
     # Draw trajectory of orbiter
     def draw_trajectory(
@@ -33,7 +67,7 @@ class DrawTrajectory(Widget):
 
         max = orbit_values.aphelion
         min = orbit_values.perihelion
-        (x2, y2, z2) = orbit_values.points[0]
+        k = self.ratio * zoom_ratio
 
         with self.canvas.before:
             if not secondary:
@@ -43,14 +77,10 @@ class DrawTrajectory(Widget):
                 Color(0, 1, 1)
                 dashed = 4
 
-            x2 = self.scale(x2, zoom_ratio) + attractor_x
-            y2 = self.scale(y2, zoom_ratio) + attractor_y
-
-            for (x, y, z) in orbit_values.points[1:-1]:
-                x = self.scale(x, zoom_ratio) + attractor_x
-                y = self.scale(y, zoom_ratio) + attractor_y
-                Line(points=[x, y, x2, y2], dash_offset=dashed)
-                (x2, y2) = (x, y)
+            # A single Line for the whole trajectory (one instruction instead of
+            # one per segment: much cheaper to build and to render)
+            pts = orbit_values.points[:, :2] * k + (attractor_x, attractor_y)
+            Line(points=pts.ravel().tolist(), dash_offset=dashed)
 
             if max != None and not secondary:
                 Color(1, 0, 0, 0.3)

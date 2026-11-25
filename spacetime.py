@@ -1,5 +1,6 @@
 import time
 from constants import max_speed_before_crash
+from flightinfo import flight_info
 from vector import Vector
 from attractor import Attractor
 from orbiter import Orbiter, Stages, Stage_Composant, Orbiters, Load_Orbiters
@@ -44,6 +45,9 @@ class SpaceTime:
 
     def __init__(self, file_name, control_info=None):
         logging.basicConfig(format="Debug:%(message)s", level=logging.INFO)
+        # Kivy installs its handlers on the root logger before us, so basicConfig
+        # does nothing and the root level stays NOTSET (= every DEBUG is written)
+        logging.getLogger().setLevel(logging.INFO)
         self.event_listener = EventListener()
 
         scene = Scenery(file_name)
@@ -61,7 +65,12 @@ class SpaceTime:
         self.attractors_list(self.main_attractor)
 
     def __del__(self):
-        self.controller.stop()
+        if self.controller:
+            self.controller.stop()
+
+    # Information bar: shown with or without a mission
+    def get_info(self):
+        return flight_info(self.orbiters, self.time_controller)
 
     def update(self, dt=0):
         self.orbiters.apply_remove()
@@ -69,17 +78,23 @@ class SpaceTime:
         for name in list(self.orbiters.get_orbiters().keys()):
             #      self.show_info()
             orbiter = self.orbiters.get_orbiter(name)
-            if orbiter.thrust:
+            burning = orbiter.is_burning()
+            # Engine pushing or moving in an atmosphere: numerical integration
+            # (Kepler propagation ignores the thrust, the drag and the heating)
+            numerical = burning or orbiter.in_atmosphere()
+            if numerical:
                 thrust = True
-            if self.time_controller.t_increment <= 10 or orbiter.thrust != 0:
+            if self.time_controller.t_increment <= 10 or numerical:
                 crashed = orbiter.update_position(
                     self.time_controller, self.time_controller.delta_t()
                 )
             else:
                 crashed = orbiter.update_position_delta_t(self.time_controller)
             if crashed:
-
-                print("Orbiter Crash")
+                if orbiter.destroyed:
+                    print("Orbiter %s destroyed by the atmospheric reentry" % name)
+                else:
+                    print("Orbiter Crash")
                 self.orbiters.remove(name)
 
             if thrust and self.time_controller.t_increment > 10:
